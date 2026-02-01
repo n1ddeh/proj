@@ -10,7 +10,7 @@ import {
   extractGitOrg,
   PROJECT_MARKERS,
   EXCLUDED_DIRS,
-} from "./utils";
+} from "../utils";
 
 describe("expandPath", () => {
   test("expands tilde to home directory", () => {

@@ -14,7 +14,7 @@ const TEST_DIR = join(tmpdir(), "project-opener-test-collections");
 const TEST_COLLECTIONS_FILE = join(TEST_DIR, "collections.json");
 const TEST_SETTINGS_FILE = join(TEST_DIR, "project-settings.json");
 
-import type { Collection } from "./types";
+import type { Collection } from "../types";
 
 // Replicate functions with test path
 function loadCollections(): Collection[] {

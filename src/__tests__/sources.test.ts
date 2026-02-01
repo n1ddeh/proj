@@ -13,7 +13,7 @@ import { tmpdir } from "os";
 const TEST_DIR = join(tmpdir(), "project-opener-test-sources");
 const TEST_SOURCES_FILE = join(TEST_DIR, "sources.json");
 
-import type { SourceDirectory } from "./types";
+import type { SourceDirectory } from "../types";
 
 function loadSources(): SourceDirectory[] {
   try {

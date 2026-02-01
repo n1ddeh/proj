@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { parseSearchQuery, matchesSearch } from "./search";
-import type { EnhancedProject } from "./types";
+import { parseSearchQuery, matchesSearch } from "../search";
+import type { EnhancedProject } from "../types";
 
 describe("parseSearchQuery", () => {
   test("parses plain text", () => {

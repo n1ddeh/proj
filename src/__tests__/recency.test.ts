@@ -4,7 +4,7 @@ import {
   getRecencyIndicator,
   isRecentProject,
   isStaleProject,
-} from "./recency";
+} from "../recency";
 
 describe("formatRelativeTime", () => {
   test("returns 'just now' for recent timestamps", () => {
