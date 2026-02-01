@@ -3,7 +3,6 @@ import {
   Action,
   List,
   Icon,
-  Color,
   getPreferenceValues,
   open,
   showToast,
@@ -30,7 +29,6 @@ import { getAllCollections } from "./collections";
 import { parseSearchQuery, matchesSearch } from "./search";
 import {
   formatRelativeTime,
-  getRecencyIndicator,
   updateLastOpened,
   isRecentProject,
 } from "./recency";
@@ -169,27 +167,35 @@ export default function Command() {
 
   const getCollectionAccessories = (
     project: ProjectWithSettings,
-  ): { icon: { source: Icon; tintColor?: string }; tooltip: string }[] => {
+  ): {
+    icon?: { source: Icon; tintColor?: string };
+    text?: string;
+    tooltip?: string;
+  }[] => {
     if (!project.collections || project.collections.length === 0) return [];
-    return project.collections
-      .map((id) => {
-        const coll = collectionMap.get(id);
-        if (!coll) return null;
-        const iconSource = coll.icon
-          ? Icon[coll.icon as keyof typeof Icon]
-          : Icon.Tag;
-        return {
-          icon: {
-            source: iconSource,
-            tintColor: coll.color,
-          },
-          tooltip: coll.name,
-        };
-      })
-      .filter(Boolean) as {
-      icon: { source: Icon; tintColor?: string };
-      tooltip: string;
-    }[];
+    const accessories: {
+      icon?: { source: Icon; tintColor?: string };
+      text?: string;
+      tooltip?: string;
+    }[] = [];
+
+    for (const id of project.collections) {
+      const coll = collectionMap.get(id);
+      if (!coll) continue;
+      const iconSource = coll.icon
+        ? Icon[coll.icon as keyof typeof Icon]
+        : Icon.Tag;
+      // Add icon with name as a single accessory
+      accessories.push({
+        icon: {
+          source: iconSource,
+          tintColor: coll.color,
+        },
+        text: coll.name,
+        tooltip: coll.name,
+      });
+    }
+    return accessories;
   };
 
   const groupedProjects = useMemo(() => {
@@ -294,9 +300,8 @@ export default function Command() {
         groupedProjects.map((group) => (
           <List.Section key={group.title} title={group.title}>
             {group.projects.map((project) => {
-              const indicator = getRecencyIndicator(project.lastOpened);
               const relativeTime = formatRelativeTime(project.lastOpened);
-              // Show collection icons when in auto groups (Recent, Uncategorized, flat)
+              // Show collection icons + names when in auto groups (Recent, Uncategorized, flat)
               const collectionAccessories = group.isAuto
                 ? getCollectionAccessories(project)
                 : [];
@@ -307,11 +312,6 @@ export default function Command() {
                   title={project.settings.displayName || project.name}
                   accessories={[
                     ...collectionAccessories,
-                    ...(indicator === "blue"
-                      ? [{ icon: { source: Icon.Dot, tintColor: Color.Blue } }]
-                      : indicator === "red" && preferences.showStaleIndicator
-                        ? [{ icon: { source: Icon.Dot, tintColor: Color.Red } }]
-                        : []),
                     ...(relativeTime ? [{ text: relativeTime }] : []),
                   ]}
                   icon={
