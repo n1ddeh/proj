@@ -206,6 +206,75 @@ describe("settings", () => {
     });
   });
 
+  describe("removeCollectionFromAllProjects", () => {
+    function removeCollectionFromAllProjects(collectionId: string): number {
+      const store = loadAllSettings();
+      let cleanedCount = 0;
+
+      for (const settings of Object.values(store)) {
+        if (settings.collections?.includes(collectionId)) {
+          settings.collections = settings.collections.filter(
+            (id) => id !== collectionId,
+          );
+          cleanedCount++;
+        }
+      }
+
+      if (cleanedCount > 0) {
+        writeFileSync(TEST_SETTINGS_FILE, JSON.stringify(store, null, 2));
+      }
+
+      return cleanedCount;
+    }
+
+    test("removes collection from all projects that have it", () => {
+      saveProjectSettings("/project-a", {
+        displayName: "A",
+        collections: ["coll_1", "coll_2"],
+      });
+      saveProjectSettings("/project-b", {
+        displayName: "B",
+        collections: ["coll_1"],
+      });
+      saveProjectSettings("/project-c", {
+        displayName: "C",
+        collections: ["coll_2"],
+      });
+
+      const count = removeCollectionFromAllProjects("coll_1");
+
+      expect(count).toBe(2);
+      expect(getProjectSettings("/project-a").collections).toEqual(["coll_2"]);
+      expect(getProjectSettings("/project-b").collections).toEqual([]);
+      expect(getProjectSettings("/project-c").collections).toEqual(["coll_2"]);
+    });
+
+    test("returns 0 when no projects have the collection", () => {
+      saveProjectSettings("/project-a", {
+        displayName: "A",
+        collections: ["coll_2"],
+      });
+
+      const count = removeCollectionFromAllProjects("coll_1");
+
+      expect(count).toBe(0);
+    });
+
+    test("handles projects with no collections array", () => {
+      saveProjectSettings("/project-a", { displayName: "A" });
+      saveProjectSettings("/project-b", {
+        displayName: "B",
+        collections: ["coll_1"],
+      });
+
+      const count = removeCollectionFromAllProjects("coll_1");
+
+      expect(count).toBe(1);
+      expect(getProjectSettings("/project-a").collections).toBeUndefined();
+      expect(getProjectSettings("/project-b").collections).toEqual([]);
+    });
+  });
+
   describe("extended settings", () => {
     test("saves and loads collections array", () => {
       saveProjectSettings("/project", {

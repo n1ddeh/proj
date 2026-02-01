@@ -3,6 +3,7 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join, dirname } from "path";
 import type { Collection, EnhancedProject } from "./types";
 import { AUTO_COLLECTIONS } from "./types";
+import { removeCollectionFromAllProjects } from "./settings";
 
 const COLLECTIONS_FILE = join(environment.supportPath, "collections.json");
 
@@ -58,6 +59,7 @@ export function deleteCollection(id: string): boolean {
   const filtered = collections.filter((c) => c.id !== id);
   if (filtered.length === collections.length) return false;
   saveCollections(filtered);
+  removeCollectionFromAllProjects(id);
   return true;
 }
 

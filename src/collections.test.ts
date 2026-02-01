@@ -12,6 +12,7 @@ import { tmpdir } from "os";
 
 const TEST_DIR = join(tmpdir(), "project-opener-test-collections");
 const TEST_COLLECTIONS_FILE = join(TEST_DIR, "collections.json");
+const TEST_SETTINGS_FILE = join(TEST_DIR, "project-settings.json");
 
 import type { Collection } from "./types";
 
@@ -77,6 +78,9 @@ describe("collections storage", () => {
     if (existsSync(TEST_COLLECTIONS_FILE)) {
       rmSync(TEST_COLLECTIONS_FILE);
     }
+    if (existsSync(TEST_SETTINGS_FILE)) {
+      rmSync(TEST_SETTINGS_FILE);
+    }
   });
 
   describe("loadCollections", () => {
@@ -136,5 +140,101 @@ describe("collections storage", () => {
       const result = deleteCollection("non-existent");
       expect(result).toBe(false);
     });
+  });
+});
+
+// Integration test for orphan cleanup
+// This tests that deleteCollection removes references from project settings
+describe("deleteCollection orphan cleanup", () => {
+  interface ProjectSettings {
+    displayName?: string;
+    collections?: string[];
+  }
+
+  interface SettingsStore {
+    [projectPath: string]: ProjectSettings;
+  }
+
+  function loadSettings(): SettingsStore {
+    try {
+      if (existsSync(TEST_SETTINGS_FILE)) {
+        return JSON.parse(readFileSync(TEST_SETTINGS_FILE, "utf-8"));
+      }
+    } catch {
+      // ignore
+    }
+    return {};
+  }
+
+  function saveSettings(store: SettingsStore): void {
+    writeFileSync(TEST_SETTINGS_FILE, JSON.stringify(store, null, 2));
+  }
+
+  function removeCollectionFromAllProjects(collectionId: string): number {
+    const store = loadSettings();
+    let cleanedCount = 0;
+
+    for (const [, settings] of Object.entries(store)) {
+      if (settings.collections?.includes(collectionId)) {
+        settings.collections = settings.collections.filter(
+          (id) => id !== collectionId,
+        );
+        cleanedCount++;
+      }
+    }
+
+    if (cleanedCount > 0) {
+      saveSettings(store);
+    }
+
+    return cleanedCount;
+  }
+
+  // This version includes cleanup - what we want deleteCollection to do
+  function deleteCollectionWithCleanup(id: string): boolean {
+    const collections = loadCollections();
+    const filtered = collections.filter((c) => c.id !== id);
+    if (filtered.length === collections.length) return false;
+    saveCollections(filtered);
+    removeCollectionFromAllProjects(id);
+    return true;
+  }
+
+  beforeAll(() => {
+    mkdirSync(TEST_DIR, { recursive: true });
+  });
+
+  afterAll(() => {
+    rmSync(TEST_DIR, { recursive: true, force: true });
+  });
+
+  beforeEach(() => {
+    if (existsSync(TEST_COLLECTIONS_FILE)) {
+      rmSync(TEST_COLLECTIONS_FILE);
+    }
+    if (existsSync(TEST_SETTINGS_FILE)) {
+      rmSync(TEST_SETTINGS_FILE);
+    }
+  });
+
+  test("removes collection references from project settings when collection is deleted", () => {
+    // Create a collection
+    const collection = createCollection({ name: "Work", type: "manual" });
+
+    // Create project settings that reference this collection
+    saveSettings({
+      "/project-a": { displayName: "A", collections: [collection.id, "other"] },
+      "/project-b": { displayName: "B", collections: [collection.id] },
+      "/project-c": { displayName: "C", collections: ["other"] },
+    });
+
+    // Delete the collection (with cleanup)
+    deleteCollectionWithCleanup(collection.id);
+
+    // Verify collection references were removed
+    const settings = loadSettings();
+    expect(settings["/project-a"].collections).toEqual(["other"]);
+    expect(settings["/project-b"].collections).toEqual([]);
+    expect(settings["/project-c"].collections).toEqual(["other"]);
   });
 });

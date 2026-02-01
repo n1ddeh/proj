@@ -143,3 +143,24 @@ export function migrateProjectSettings(oldPath: string, newPath: string): void {
     writeFileSync(SETTINGS_FILE, JSON.stringify(store, null, 2));
   }
 }
+
+export function removeCollectionFromAllProjects(collectionId: string): number {
+  const store = loadAllSettings();
+  let cleanedCount = 0;
+
+  for (const [, settings] of Object.entries(store)) {
+    if (settings.collections?.includes(collectionId)) {
+      settings.collections = settings.collections.filter(
+        (id) => id !== collectionId,
+      );
+      cleanedCount++;
+    }
+  }
+
+  if (cleanedCount > 0) {
+    ensureSettingsDir();
+    writeFileSync(SETTINGS_FILE, JSON.stringify(store, null, 2));
+  }
+
+  return cleanedCount;
+}

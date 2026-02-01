@@ -258,7 +258,9 @@ export default function Command() {
     tooltip?: string;
   };
 
-  const getCollectionAccessories = (project: ProjectWithSettings): Accessory[] => {
+  const getCollectionAccessories = (
+    project: ProjectWithSettings,
+  ): Accessory[] => {
     if (!project.collections || project.collections.length === 0) return [];
     const accessories: Accessory[] = [];
 
@@ -753,103 +755,103 @@ export default function Command() {
             title={`${group.title} · ${group.projects.length}`}
           >
             {group.projects.map((project) => (
-                <List.Item
-                  key={project.path}
-                  title={project.settings.displayName || project.name}
-                  accessories={getProjectAccessories(project, group.isAuto)}
-                  icon={
-                    project.missing
-                      ? { source: Icon.ExclamationMark, tintColor: Color.Red }
-                      : getProjectIcon(
-                          project.settings,
-                          project.settings.displayName || project.name,
-                        )
-                  }
-                  keywords={[
-                    project.name,
-                    project.settings.displayName || "",
-                  ].filter(Boolean)}
-                  actions={
-                    project.missing ? (
-                      <ActionPanel>
-                        <ActionPanel.Section>
-                          <Action
-                            title="Relocate Project…"
-                            icon={Icon.Folder}
-                            onAction={() => handleRelocateProject(project)}
-                          />
-                          <Action
-                            title="Remove from Extension"
-                            icon={Icon.Trash}
-                            style={Action.Style.Destructive}
-                            onAction={() => handleDeleteFromExtension(project)}
-                          />
-                        </ActionPanel.Section>
-                        <ActionPanel.Section>
-                          <Action.CopyToClipboard
-                            title="Copy Original Path"
-                            content={project.path}
-                          />
-                        </ActionPanel.Section>
-                      </ActionPanel>
-                    ) : (
-                      <ActionPanel>
-                        <ActionPanel.Section>
-                          <Action
-                            title={`Open in ${project.settings.ide?.name || preferences.ide.name}`}
-                            icon={Icon.ArrowRight}
-                            onAction={() => handleOpen(project)}
-                          />
-                          <Action.ShowInFinder path={project.path} />
-                          <Action.CopyToClipboard
-                            title="Copy Path"
-                            content={project.path}
-                          />
-                        </ActionPanel.Section>
-                        <ActionPanel.Section>
-                          <Action
-                            title="Add to Collection…"
-                            icon={Icon.Tag}
-                            shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
-                            onAction={() =>
-                              push(
-                                <AddToCollectionForm
-                                  projectPath={project.path}
-                                  currentCollections={project.collections}
-                                  onSave={loadProjects}
-                                />,
-                              )
-                            }
-                          />
-                          <Action
-                            title="Project Settings"
-                            icon={Icon.Gear}
-                            shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
-                            onAction={() =>
-                              push(
-                                <ProjectSettingsForm
-                                  projectPath={project.path}
-                                  projectName={project.name}
-                                  onSave={loadProjects}
-                                />,
-                              )
-                            }
-                          />
-                        </ActionPanel.Section>
-                        <ActionPanel.Section>
-                          <Action
-                            title="Delete Project"
-                            icon={Icon.Trash}
-                            style={Action.Style.Destructive}
-                            shortcut={{ modifiers: ["ctrl"], key: "x" }}
-                            onAction={() => handleDelete(project)}
-                          />
-                        </ActionPanel.Section>
-                      </ActionPanel>
-                    )
-                  }
-                />
-              ))}
+              <List.Item
+                key={project.path}
+                title={project.settings.displayName || project.name}
+                accessories={getProjectAccessories(project, group.isAuto)}
+                icon={
+                  project.missing
+                    ? { source: Icon.ExclamationMark, tintColor: Color.Red }
+                    : getProjectIcon(
+                        project.settings,
+                        project.settings.displayName || project.name,
+                      )
+                }
+                keywords={[
+                  project.name,
+                  project.settings.displayName || "",
+                ].filter(Boolean)}
+                actions={
+                  project.missing ? (
+                    <ActionPanel>
+                      <ActionPanel.Section>
+                        <Action
+                          title="Relocate Project…"
+                          icon={Icon.Folder}
+                          onAction={() => handleRelocateProject(project)}
+                        />
+                        <Action
+                          title="Remove from Extension"
+                          icon={Icon.Trash}
+                          style={Action.Style.Destructive}
+                          onAction={() => handleDeleteFromExtension(project)}
+                        />
+                      </ActionPanel.Section>
+                      <ActionPanel.Section>
+                        <Action.CopyToClipboard
+                          title="Copy Original Path"
+                          content={project.path}
+                        />
+                      </ActionPanel.Section>
+                    </ActionPanel>
+                  ) : (
+                    <ActionPanel>
+                      <ActionPanel.Section>
+                        <Action
+                          title={`Open in ${project.settings.ide?.name || preferences.ide.name}`}
+                          icon={Icon.ArrowRight}
+                          onAction={() => handleOpen(project)}
+                        />
+                        <Action.ShowInFinder path={project.path} />
+                        <Action.CopyToClipboard
+                          title="Copy Path"
+                          content={project.path}
+                        />
+                      </ActionPanel.Section>
+                      <ActionPanel.Section>
+                        <Action
+                          title="Add to Collection…"
+                          icon={Icon.Tag}
+                          shortcut={{ modifiers: ["cmd", "shift"], key: "c" }}
+                          onAction={() =>
+                            push(
+                              <AddToCollectionForm
+                                projectPath={project.path}
+                                currentCollections={project.collections}
+                                onSave={loadProjects}
+                              />,
+                            )
+                          }
+                        />
+                        <Action
+                          title="Project Settings"
+                          icon={Icon.Gear}
+                          shortcut={{ modifiers: ["cmd", "shift"], key: "," }}
+                          onAction={() =>
+                            push(
+                              <ProjectSettingsForm
+                                projectPath={project.path}
+                                projectName={project.name}
+                                onSave={loadProjects}
+                              />,
+                            )
+                          }
+                        />
+                      </ActionPanel.Section>
+                      <ActionPanel.Section>
+                        <Action
+                          title="Delete Project"
+                          icon={Icon.Trash}
+                          style={Action.Style.Destructive}
+                          shortcut={{ modifiers: ["ctrl"], key: "x" }}
+                          onAction={() => handleDelete(project)}
+                        />
+                      </ActionPanel.Section>
+                    </ActionPanel>
+                  )
+                }
+              />
+            ))}
           </List.Section>
         ))
       )}
