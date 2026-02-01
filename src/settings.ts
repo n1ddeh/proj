@@ -121,3 +121,17 @@ export function deleteProjectSettings(projectPath: string): void {
   delete store[projectPath];
   writeFileSync(SETTINGS_FILE, JSON.stringify(store, null, 2));
 }
+
+export function migrateProjectSettings(
+  oldPath: string,
+  newPath: string,
+): void {
+  ensureSettingsDir();
+  const store = loadAllSettings();
+  const settings = store[oldPath];
+  if (settings) {
+    store[newPath] = settings;
+    delete store[oldPath];
+    writeFileSync(SETTINGS_FILE, JSON.stringify(store, null, 2));
+  }
+}
