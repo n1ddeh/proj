@@ -14,6 +14,7 @@ import {
   ProjectIDE,
 } from "./settings";
 import { ICON_COLORS, generateInitialsIcon, getProjectInitials } from "./utils";
+import { getAllCollections } from "./collections";
 import { basename } from "path";
 
 interface ProjectSettingsFormProps {
@@ -87,9 +88,17 @@ export default function ProjectSettingsForm({
   const [ideApp, setIdeApp] = useState<string[]>(
     existingSettings.ide?.path ? [existingSettings.ide.path] : [],
   );
+  const [collections, setCollections] = useState<string[]>(
+    existingSettings.collections || [],
+  );
 
   // Memoize icon list to avoid recalculating on every render
   const availableIcons = useMemo(() => getAvailableIcons(), []);
+
+  // Get all manual collections for the picker
+  const manualCollections = useMemo(() => {
+    return getAllCollections().filter((c) => c.type === "manual");
+  }, []);
 
   async function handleSubmit() {
     let ide: ProjectIDE | undefined;
@@ -105,6 +114,8 @@ export default function ProjectSettingsForm({
       icon: icon || undefined,
       iconColor: iconColor || undefined,
       ide,
+      collections: collections.length > 0 ? collections : undefined,
+      lastOpened: existingSettings.lastOpened,
     });
 
     await showToast({
@@ -172,6 +183,27 @@ export default function ProjectSettingsForm({
         value={ideApp}
         onChange={setIdeApp}
       />
+      <Form.Separator />
+      <Form.TagPicker
+        id="collections"
+        title="Collections"
+        info="Assign this project to collections for organization"
+        value={collections}
+        onChange={setCollections}
+      >
+        {manualCollections.map((collection) => (
+          <Form.TagPicker.Item
+            key={collection.id}
+            value={collection.id}
+            title={collection.name}
+            icon={
+              collection.icon
+                ? Icon[collection.icon as keyof typeof Icon]
+                : Icon.Tag
+            }
+          />
+        ))}
+      </Form.TagPicker>
     </Form>
   );
 }
