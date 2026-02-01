@@ -22,6 +22,7 @@ import {
   getRandomIconColor,
   detectLanguage,
   extractGitOrg,
+  getProjectIcon,
 } from "./utils";
 import {
   loadAllSettings,
@@ -39,7 +40,7 @@ import {
 } from "./recency";
 import { runMigrationIfNeeded } from "./migration";
 import type { EnhancedProject } from "./types";
-import ProjectSettingsForm, { iconFromString } from "./ProjectSettingsForm";
+import ProjectSettingsForm from "./ProjectSettingsForm";
 import AddToCollectionForm from "./AddToCollectionForm";
 
 interface Preferences {
@@ -255,11 +256,18 @@ export default function Command() {
         { name: "recent", label: "Recent", icon: Icon.Clock },
         { name: "stale", label: "Stale", icon: Icon.ExclamationMark },
         { name: "month", label: "This Month", icon: Icon.Calendar },
-        { name: "uncategorized", label: "Uncategorized", icon: Icon.QuestionMark },
+        {
+          name: "uncategorized",
+          label: "Uncategorized",
+          icon: Icon.QuestionMark,
+        },
       ];
 
       for (const s of specials) {
-        if (s.name.includes(partial) || s.label.toLowerCase().includes(partial)) {
+        if (
+          s.name.includes(partial) ||
+          s.label.toLowerCase().includes(partial)
+        ) {
           suggestions.push({
             id: `suggestion-#${s.name}`,
             title: `#${s.name}`,
@@ -277,7 +285,9 @@ export default function Command() {
             id: `suggestion-#${c.name}`,
             title: `#${c.name.toLowerCase().replace(/\s+/g, "-")}`,
             subtitle: c.name,
-            icon: c.icon ? (Icon[c.icon as keyof typeof Icon] as Icon) : Icon.Folder,
+            icon: c.icon
+              ? (Icon[c.icon as keyof typeof Icon] as Icon)
+              : Icon.Folder,
             filter: `${prefixWithSpace}#${c.name.toLowerCase().replace(/\s+/g, "-")}`,
           });
         }
@@ -488,7 +498,9 @@ export default function Command() {
           ))}
         </List.Section>
       )}
-      {groupedProjects.length === 0 && searchSuggestions.length === 0 && !isLoading ? (
+      {groupedProjects.length === 0 &&
+      searchSuggestions.length === 0 &&
+      !isLoading ? (
         <List.EmptyView
           title="No projects found"
           description="No projects match your search"
@@ -519,15 +531,10 @@ export default function Command() {
                     ...(showDivider ? [{ text: "|" }] : []),
                     ...(relativeTime ? [{ text: relativeTime }] : []),
                   ]}
-                  icon={
-                    iconFromString(project.settings.icon) ||
-                    generateInitialsIcon(
-                      getProjectInitials(
-                        project.settings.displayName || project.name,
-                      ),
-                      project.settings.iconColor || "#546E7A",
-                    )
-                  }
+                  icon={getProjectIcon(
+                    project.settings,
+                    project.settings.displayName || project.name,
+                  )}
                   keywords={[
                     project.name,
                     project.settings.displayName || "",

@@ -1,7 +1,7 @@
 import { readdirSync, statSync, existsSync, readFileSync } from "fs";
 import { join, relative } from "path";
 import { homedir } from "os";
-import { Icon, Image } from "@raycast/api";
+import { Icon } from "@raycast/api";
 import type { ProjectSettings } from "./settings";
 
 export interface Project {
@@ -252,7 +252,7 @@ export function extractGitOrg(dirPath: string): string | undefined {
 export function getProjectIcon(
   settings: ProjectSettings,
   projectName: string,
-): Image.Source {
+): string | Icon {
   // Custom icon takes priority
   if (settings.customIcon && existsSync(settings.customIcon)) {
     return settings.customIcon;
