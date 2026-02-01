@@ -18,6 +18,14 @@ export const PROJECT_MARKERS = [
   "pom.xml",
   "build.gradle",
   "CMakeLists.txt",
+  // Additional markers
+  "Gemfile",
+  "composer.json",
+  "Package.swift",
+  "pubspec.yaml",
+  "mix.exs",
+  "build.sbt",
+  "requirements.txt",
 ];
 
 export const EXCLUDED_DIRS = new Set([
@@ -170,10 +178,34 @@ export function detectLanguage(dirPath: string): string | undefined {
   // Order matters: more specific checks first
   if (existsSync(join(dirPath, "Cargo.toml"))) return "rust";
   if (existsSync(join(dirPath, "go.mod"))) return "go";
-  if (existsSync(join(dirPath, "pyproject.toml"))) return "python";
+  if (existsSync(join(dirPath, "Package.swift"))) return "swift";
+  if (existsSync(join(dirPath, "pubspec.yaml"))) return "dart";
+  if (existsSync(join(dirPath, "mix.exs"))) return "elixir";
+  if (existsSync(join(dirPath, "build.sbt"))) return "scala";
+  if (existsSync(join(dirPath, "Gemfile"))) return "ruby";
+  if (existsSync(join(dirPath, "composer.json"))) return "php";
   if (existsSync(join(dirPath, "pom.xml"))) return "java";
   if (existsSync(join(dirPath, "build.gradle"))) return "kotlin";
   if (existsSync(join(dirPath, "CMakeLists.txt"))) return "cpp";
+
+  // Python - check multiple markers
+  if (
+    existsSync(join(dirPath, "pyproject.toml")) ||
+    existsSync(join(dirPath, "requirements.txt")) ||
+    existsSync(join(dirPath, "setup.py"))
+  ) {
+    return "python";
+  }
+
+  // C# - check for .csproj or .sln files
+  try {
+    const entries = readdirSync(dirPath);
+    if (entries.some((e) => e.endsWith(".csproj") || e.endsWith(".sln"))) {
+      return "csharp";
+    }
+  } catch {
+    // Ignore read errors
+  }
 
   // Check for TypeScript vs JavaScript
   if (existsSync(join(dirPath, "package.json"))) {

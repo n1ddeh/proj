@@ -1,5 +1,6 @@
 import type { EnhancedProject } from "./types";
 import { expandPath } from "./utils";
+import { getAllCollections, matchesAutoCollection, getCollectionById } from "./collections";
 
 export interface SearchFilters {
   collection?: string;
@@ -20,6 +21,46 @@ const SPECIAL_COLLECTIONS: Record<string, string> = {
   uncategorized: "_uncategorized",
 };
 
+const LANGUAGE_ALIASES: Record<string, string> = {
+  // JavaScript/TypeScript
+  js: "javascript",
+  ts: "typescript",
+  tsx: "typescript",
+  jsx: "javascript",
+  node: "javascript",
+  // Python
+  py: "python",
+  python3: "python",
+  // Ruby
+  rb: "ruby",
+  // Rust
+  rs: "rust",
+  // Go
+  golang: "go",
+  // Kotlin
+  kt: "kotlin",
+  // Java
+  jvm: "java",
+  // C/C++
+  "c++": "cpp",
+  cxx: "cpp",
+  cc: "cpp",
+  // C#
+  cs: "csharp",
+  "c#": "csharp",
+  dotnet: "csharp",
+  // Swift
+  ios: "swift",
+  // Dart/Flutter
+  flutter: "dart",
+  // Elixir
+  ex: "elixir",
+  // Scala
+  sc: "scala",
+  // PHP
+  php8: "php",
+};
+
 export function parseSearchQuery(query: string): ParsedSearch {
   const filters: SearchFilters = {};
   const textParts: string[] = [];
@@ -31,7 +72,8 @@ export function parseSearchQuery(query: string): ParsedSearch {
       const collName = token.slice(1).toLowerCase();
       filters.collection = SPECIAL_COLLECTIONS[collName] || collName;
     } else if (token.startsWith("lang:")) {
-      filters.lang = token.slice(5).toLowerCase();
+      const lang = token.slice(5).toLowerCase();
+      filters.lang = LANGUAGE_ALIASES[lang] || lang;
     } else if (token.startsWith("org:")) {
       filters.org = token.slice(4).toLowerCase();
     } else if (token.startsWith("in:")) {
@@ -62,10 +104,33 @@ export function matchesSearch(
 
   // Check collection filter
   if (query.filters.collection) {
-    const hasCollection = project.collections?.includes(
-      query.filters.collection,
-    );
-    if (!hasCollection) return false;
+    const filterValue = query.filters.collection;
+
+    // Check if it's a special auto collection (starts with _)
+    if (filterValue.startsWith("_")) {
+      const autoCollection = getCollectionById(filterValue);
+      if (autoCollection && autoCollection.type === "auto") {
+        if (!matchesAutoCollection(project, autoCollection)) return false;
+      } else {
+        return false;
+      }
+    } else {
+      // Look up collection by name (case-insensitive)
+      const allCollections = getAllCollections();
+      const matchedCollection = allCollections.find(
+        (c) => c.name.toLowerCase() === filterValue.toLowerCase(),
+      );
+
+      if (!matchedCollection) return false;
+
+      // For auto collections, check criteria
+      if (matchedCollection.type === "auto") {
+        if (!matchesAutoCollection(project, matchedCollection)) return false;
+      } else {
+        // For manual collections, check if project is assigned
+        if (!project.collections?.includes(matchedCollection.id)) return false;
+      }
+    }
   }
 
   // Check language filter

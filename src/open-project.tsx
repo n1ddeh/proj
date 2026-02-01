@@ -3,6 +3,7 @@ import {
   Action,
   List,
   Icon,
+  Color,
   getPreferenceValues,
   open,
   showToast,
@@ -53,6 +54,32 @@ interface ProjectWithSettings extends EnhancedProject {
 }
 
 type GroupingMode = "collection" | "recency" | "flat";
+
+interface SearchSuggestion {
+  id: string;
+  title: string;
+  subtitle?: string;
+  icon: Icon;
+  filter: string;
+}
+
+const LANGUAGE_OPTIONS = [
+  { name: "TypeScript", value: "typescript", alias: "ts" },
+  { name: "JavaScript", value: "javascript", alias: "js" },
+  { name: "Python", value: "python", alias: "py" },
+  { name: "Rust", value: "rust", alias: "rs" },
+  { name: "Go", value: "go", alias: "golang" },
+  { name: "Ruby", value: "ruby", alias: "rb" },
+  { name: "Java", value: "java" },
+  { name: "Kotlin", value: "kotlin", alias: "kt" },
+  { name: "Swift", value: "swift" },
+  { name: "Dart", value: "dart", alias: "flutter" },
+  { name: "PHP", value: "php" },
+  { name: "C#", value: "csharp", alias: "cs" },
+  { name: "C++", value: "cpp", alias: "c++" },
+  { name: "Elixir", value: "elixir", alias: "ex" },
+  { name: "Scala", value: "scala", alias: "sc" },
+];
 
 export default function Command() {
   const [projects, setProjects] = useState<ProjectWithSettings[]>([]);
@@ -202,6 +229,105 @@ export default function Command() {
     return accessories;
   };
 
+  // Generate search suggestions based on current input
+  const searchSuggestions = useMemo((): SearchSuggestion[] => {
+    if (!searchText) return [];
+
+    const tokens = searchText.split(/\s+/);
+    const lastToken = tokens[tokens.length - 1] || "";
+    const prefix = tokens.slice(0, -1).join(" ");
+    const prefixWithSpace = prefix ? prefix + " " : "";
+
+    // Collection suggestions when typing #
+    if (lastToken.startsWith("#") && lastToken.length >= 1) {
+      const partial = lastToken.slice(1).toLowerCase();
+      const collections = getAllCollections();
+      const suggestions: SearchSuggestion[] = [];
+
+      // Add special collections
+      const specials = [
+        { name: "recent", label: "Recent", icon: Icon.Clock },
+        { name: "stale", label: "Stale", icon: Icon.ExclamationMark },
+        { name: "month", label: "This Month", icon: Icon.Calendar },
+        { name: "uncategorized", label: "Uncategorized", icon: Icon.QuestionMark },
+      ];
+
+      for (const s of specials) {
+        if (s.name.includes(partial) || s.label.toLowerCase().includes(partial)) {
+          suggestions.push({
+            id: `suggestion-#${s.name}`,
+            title: `#${s.name}`,
+            subtitle: s.label,
+            icon: s.icon,
+            filter: `${prefixWithSpace}#${s.name}`,
+          });
+        }
+      }
+
+      // Add manual collections
+      for (const c of collections.filter((c) => c.type === "manual")) {
+        if (c.name.toLowerCase().includes(partial)) {
+          suggestions.push({
+            id: `suggestion-#${c.name}`,
+            title: `#${c.name.toLowerCase().replace(/\s+/g, "-")}`,
+            subtitle: c.name,
+            icon: c.icon ? (Icon[c.icon as keyof typeof Icon] as Icon) : Icon.Tag,
+            filter: `${prefixWithSpace}#${c.name.toLowerCase().replace(/\s+/g, "-")}`,
+          });
+        }
+      }
+
+      return suggestions.slice(0, 5);
+    }
+
+    // Language suggestions when typing lang:
+    if (lastToken.startsWith("lang:")) {
+      const partial = lastToken.slice(5).toLowerCase();
+      const suggestions: SearchSuggestion[] = [];
+
+      for (const lang of LANGUAGE_OPTIONS) {
+        if (
+          lang.name.toLowerCase().includes(partial) ||
+          lang.value.includes(partial) ||
+          lang.alias?.includes(partial)
+        ) {
+          suggestions.push({
+            id: `suggestion-lang:${lang.value}`,
+            title: `lang:${lang.value}`,
+            subtitle: lang.name + (lang.alias ? ` (${lang.alias})` : ""),
+            icon: Icon.Code,
+            filter: `${prefixWithSpace}lang:${lang.value}`,
+          });
+        }
+      }
+
+      return suggestions.slice(0, 5);
+    }
+
+    // Org suggestions when typing org:
+    if (lastToken.startsWith("org:")) {
+      const partial = lastToken.slice(4).toLowerCase();
+      const orgs = new Set<string>();
+      for (const p of projects) {
+        if (p.gitOrg && p.gitOrg.toLowerCase().includes(partial)) {
+          orgs.add(p.gitOrg);
+        }
+      }
+
+      return Array.from(orgs)
+        .slice(0, 5)
+        .map((org) => ({
+          id: `suggestion-org:${org}`,
+          title: `org:${org}`,
+          subtitle: "Git organization",
+          icon: Icon.Person,
+          filter: `${prefixWithSpace}org:${org}`,
+        }));
+    }
+
+    return [];
+  }, [searchText, projects]);
+
   const groupedProjects = useMemo(() => {
     if (grouping === "flat") {
       return [
@@ -308,10 +434,16 @@ export default function Command() {
     }
   };
 
+  const applySuggestion = (filter: string) => {
+    setSearchText(filter + " ");
+  };
+
   return (
     <List
       isLoading={isLoading}
-      searchBarPlaceholder="Search projects: (#collection, lang:, org:)"
+      filtering={false}
+      searchText={searchText}
+      searchBarPlaceholder="Search projects... (#collection, lang:, org:)"
       onSearchTextChange={setSearchText}
       searchBarAccessory={
         <List.Dropdown
@@ -325,14 +457,38 @@ export default function Command() {
         </List.Dropdown>
       }
     >
-      {groupedProjects.length === 0 && !isLoading ? (
+      {searchSuggestions.length > 0 && (
+        <List.Section title="Suggestions" subtitle="Tab or Enter to apply">
+          {searchSuggestions.map((suggestion) => (
+            <List.Item
+              key={suggestion.id}
+              title={suggestion.title}
+              subtitle={suggestion.subtitle}
+              icon={{ source: suggestion.icon, tintColor: Color.SecondaryText }}
+              actions={
+                <ActionPanel>
+                  <Action
+                    title="Apply Filter"
+                    icon={Icon.Filter}
+                    onAction={() => applySuggestion(suggestion.filter)}
+                  />
+                </ActionPanel>
+              }
+            />
+          ))}
+        </List.Section>
+      )}
+      {groupedProjects.length === 0 && searchSuggestions.length === 0 && !isLoading ? (
         <List.EmptyView
           title="No projects found"
           description="No projects match your search"
         />
       ) : (
         groupedProjects.map((group) => (
-          <List.Section key={group.title} title={group.title}>
+          <List.Section
+            key={group.title}
+            title={`${group.title} · ${group.projects.length}`}
+          >
             {group.projects.map((project) => {
               const relativeTime = formatRelativeTime(project.lastOpened);
               // Show collection icons + names when in auto groups (Recent, Uncategorized, flat)
