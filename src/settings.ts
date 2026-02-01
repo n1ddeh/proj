@@ -10,6 +10,7 @@ export interface ProjectIDE {
 export interface ProjectSettings {
   displayName?: string;
   icon?: string;
+  customIcon?: string;
   iconColor?: string;
   ide?: ProjectIDE;
   collections?: string[];
@@ -57,6 +58,7 @@ export function saveProjectSettings(
   const hasContent =
     settings.displayName ||
     settings.icon ||
+    settings.customIcon ||
     settings.iconColor ||
     settings.ide ||
     (settings.collections && settings.collections.length > 0) ||
