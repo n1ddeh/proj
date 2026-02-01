@@ -11,11 +11,15 @@ import { useState, useMemo } from "react";
 import {
   getProjectSettings,
   saveProjectSettings,
+  copyCustomIcon,
+  deleteCustomIcon,
   ProjectIDE,
 } from "./settings";
 import { ICON_COLORS, generateInitialsIcon, getProjectInitials } from "./utils";
 import { getAllCollections } from "./collections";
-import { basename } from "path";
+import { basename, extname } from "path";
+
+const SUPPORTED_IMAGE_TYPES = ["png", "jpg", "jpeg", "svg", "webp"];
 
 interface ProjectSettingsFormProps {
   projectPath: string;
@@ -91,6 +95,9 @@ export default function ProjectSettingsForm({
   const [collections, setCollections] = useState<string[]>(
     existingSettings.collections || [],
   );
+  const [customIcon, setCustomIcon] = useState<string[]>(
+    existingSettings.customIcon ? [existingSettings.customIcon] : [],
+  );
 
   // Memoize icon list to avoid recalculating on every render
   const availableIcons = useMemo(() => getAvailableIcons(), []);
@@ -109,9 +116,40 @@ export default function ProjectSettingsForm({
       };
     }
 
+    // Handle custom icon
+    let customIconPath: string | undefined = existingSettings.customIcon;
+
+    if (customIcon.length > 0 && customIcon[0]) {
+      const selectedFile = customIcon[0];
+      const ext = extname(selectedFile).slice(1).toLowerCase();
+
+      if (!SUPPORTED_IMAGE_TYPES.includes(ext)) {
+        await showToast({
+          style: Toast.Style.Failure,
+          title: "Invalid image format",
+          message: `Supported formats: ${SUPPORTED_IMAGE_TYPES.join(", ")}`,
+        });
+        return;
+      }
+
+      // Only copy if it's a new file (not already in our custom-icons dir)
+      if (selectedFile !== existingSettings.customIcon) {
+        // Delete old custom icon if exists
+        if (existingSettings.customIcon) {
+          deleteCustomIcon(existingSettings.customIcon);
+        }
+        customIconPath = copyCustomIcon(projectPath, selectedFile);
+      }
+    } else if (existingSettings.customIcon) {
+      // Custom icon was cleared
+      deleteCustomIcon(existingSettings.customIcon);
+      customIconPath = undefined;
+    }
+
     saveProjectSettings(projectPath, {
       displayName: displayName.trim() || undefined,
       icon: icon || undefined,
+      customIcon: customIconPath,
       iconColor: iconColor || undefined,
       ide,
       collections: collections.length > 0 ? collections : undefined,
@@ -154,6 +192,16 @@ export default function ProjectSettingsForm({
           />
         ))}
       </Form.Dropdown>
+      <Form.FilePicker
+        id="customIcon"
+        title="Custom Icon"
+        info="Upload a custom image (overrides icon selection above)"
+        allowMultipleSelection={false}
+        canChooseDirectories={false}
+        canChooseFiles={true}
+        value={customIcon}
+        onChange={setCustomIcon}
+      />
       <Form.Dropdown
         id="iconColor"
         title="Icon Color"
