@@ -223,8 +223,16 @@ export default function ProjectSettingsForm({
             iconColor,
           )}
         />
-        <Form.Dropdown.Item value="raycast" title="Raycast Icon" icon={Icon.AppWindowGrid3x3} />
-        <Form.Dropdown.Item value="custom" title="Custom Image" icon={Icon.Image} />
+        <Form.Dropdown.Item
+          value="raycast"
+          title="Raycast Icon"
+          icon={Icon.AppWindowGrid3x3}
+        />
+        <Form.Dropdown.Item
+          value="custom"
+          title="Custom Image"
+          icon={Icon.Image}
+        />
       </Form.Dropdown>
       {iconMode === "initials" && (
         <Form.Dropdown

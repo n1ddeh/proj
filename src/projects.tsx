@@ -12,8 +12,9 @@ import {
   confirmAlert,
   Alert,
   Form,
+  openExtensionPreferences,
 } from "@raycast/api";
-import { rmSync } from "fs";
+import { rmSync, existsSync } from "fs";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   findProjects,
@@ -30,6 +31,7 @@ import {
   deleteProjectSettings,
   deleteCustomIcon,
   migrateProjectSettings,
+  clearProjectIde,
   ProjectSettings,
 } from "./settings";
 import { loadSources } from "./sources";
@@ -55,6 +57,7 @@ interface Preferences {
 interface ProjectWithSettings extends EnhancedProject {
   settings: ProjectSettings;
   missing: boolean;
+  hasInvalidIde?: boolean;
 }
 
 type GroupingMode = "collection" | "recency" | "flat";
@@ -65,6 +68,10 @@ interface SearchSuggestion {
   subtitle?: string;
   icon: Icon;
   filter: string;
+}
+
+function isValidIde(idePath: string | undefined): boolean {
+  return !!idePath && existsSync(idePath);
 }
 
 const LANGUAGE_OPTIONS = [
@@ -90,12 +97,16 @@ export default function Command() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchText, setSearchText] = useState("");
   const [grouping, setGrouping] = useState<GroupingMode>("collection");
+  const [isGlobalIdeValid, setIsGlobalIdeValid] = useState(true);
   const { push } = useNavigation();
 
   const preferences = getPreferenceValues<Preferences>();
 
   const loadProjects = useCallback(async () => {
     try {
+      // Validate global IDE preference
+      setIsGlobalIdeValid(isValidIde(preferences.ide.path));
+
       // Run migration if needed
       await runMigrationIfNeeded({
         projectsDirectory: preferences.projectsDirectory,
@@ -152,6 +163,9 @@ export default function Command() {
               detectedLang: detectLanguage(project.path),
               gitOrg: extractGitOrg(project.path),
               missing: false,
+              hasInvalidIde: existingSettings.ide?.path
+                ? !isValidIde(existingSettings.ide.path)
+                : false,
               settings: updatedSettings,
             };
           }
@@ -163,6 +177,9 @@ export default function Command() {
             detectedLang: detectLanguage(project.path),
             gitOrg: extractGitOrg(project.path),
             missing: false,
+            hasInvalidIde: existingSettings.ide?.path
+              ? !isValidIde(existingSettings.ide.path)
+              : false,
             settings: existingSettings,
           };
         },
@@ -182,6 +199,9 @@ export default function Command() {
             collections: savedSettings.collections || [],
             lastOpened: savedSettings.lastOpened,
             missing: true,
+            hasInvalidIde: savedSettings.ide?.path
+              ? !isValidIde(savedSettings.ide.path)
+              : false,
             settings: savedSettings,
           });
         }
@@ -453,6 +473,63 @@ export default function Command() {
   }, [filteredProjects, grouping]);
 
   const handleOpen = async (project: ProjectWithSettings) => {
+    // Check if per-project IDE is invalid
+    if (project.hasInvalidIde && project.settings.ide) {
+      const ideName = project.settings.ide.name;
+      const idePath = project.settings.ide.path;
+
+      // Check if global IDE is also invalid
+      if (!isGlobalIdeValid) {
+        // Only option is to choose a new IDE
+        await confirmAlert({
+          title: "IDE Not Found",
+          message: `"${ideName}" is no longer installed.\n\nPath: ${idePath}\n\nThe default IDE is also not available. Please configure a new IDE in project settings.`,
+          primaryAction: {
+            title: "Open Project Settings",
+          },
+        });
+        push(
+          <ProjectSettingsForm
+            projectPath={project.path}
+            projectName={project.name}
+            onSave={loadProjects}
+          />,
+        );
+        return;
+      }
+
+      // Offer choice: use default or choose new
+      const useDefault = await confirmAlert({
+        title: "IDE Not Found",
+        message: `"${ideName}" is no longer installed.\n\nPath: ${idePath}`,
+        primaryAction: {
+          title: "Use Default IDE",
+        },
+        dismissAction: {
+          title: "Choose New IDE",
+        },
+      });
+
+      if (useDefault) {
+        // Clear the per-project IDE override and open with default
+        clearProjectIde(project.path);
+        await updateLastOpened(project.path);
+        await open(project.path, preferences.ide.path);
+        loadProjects();
+        return;
+      } else {
+        // Navigate to settings to choose a new IDE
+        push(
+          <ProjectSettingsForm
+            projectPath={project.path}
+            projectName={project.name}
+            onSave={loadProjects}
+          />,
+        );
+        return;
+      }
+    }
+
     const idePath = project.settings.ide?.path || preferences.ide.path;
     await updateLastOpened(project.path);
     await open(project.path, idePath);
@@ -614,6 +691,25 @@ export default function Command() {
           ))}
         </List.Section>
       )}
+      {!isGlobalIdeValid && (
+        <List.Section title="Warning">
+          <List.Item
+            key="global-ide-warning"
+            title="Default IDE Not Found"
+            subtitle={preferences.ide.name}
+            icon={{ source: Icon.Warning, tintColor: Color.Yellow }}
+            actions={
+              <ActionPanel>
+                <Action
+                  title="Open Extension Preferences"
+                  icon={Icon.Gear}
+                  onAction={openExtensionPreferences}
+                />
+              </ActionPanel>
+            }
+          />
+        </List.Section>
+      )}
       {groupedProjects.length === 0 &&
       searchSuggestions.length === 0 &&
       !isLoading ? (
@@ -651,6 +747,17 @@ export default function Command() {
                               source: Icon.Warning,
                               tintColor: Color.Red,
                             },
+                          },
+                        ]
+                      : []),
+                    ...(!project.missing && project.hasInvalidIde
+                      ? [
+                          {
+                            icon: {
+                              source: Icon.ExclamationMark,
+                              tintColor: Color.Orange,
+                            },
+                            tooltip: `IDE not found: ${project.settings.ide?.name || "Unknown"}`,
                           },
                         ]
                       : []),
