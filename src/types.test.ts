@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import type {
-  Collection,
-  AutoCriteria,
-  SourceDirectory,
-  EnhancedProject,
-} from "./types";
+import type { Collection, SourceDirectory, EnhancedProject } from "./types";
 import { AUTO_COLLECTIONS } from "./types";
 
 describe("types", () => {
