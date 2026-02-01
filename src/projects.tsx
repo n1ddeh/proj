@@ -562,14 +562,28 @@ export default function Command() {
                   key={project.path}
                   title={project.settings.displayName || project.name}
                   accessories={[
+                    ...(project.missing
+                      ? [
+                          {
+                            text: "Not found",
+                            icon: { source: Icon.Warning, tintColor: Color.Red },
+                          },
+                        ]
+                      : []),
                     ...collectionAccessories,
                     ...(showDivider ? [{ text: "|" }] : []),
-                    ...(relativeTime ? [{ text: relativeTime }] : []),
+                    ...(!project.missing && relativeTime
+                      ? [{ text: relativeTime }]
+                      : []),
                   ]}
-                  icon={getProjectIcon(
-                    project.settings,
-                    project.settings.displayName || project.name,
-                  )}
+                  icon={
+                    project.missing
+                      ? { source: Icon.ExclamationMark, tintColor: Color.Red }
+                      : getProjectIcon(
+                          project.settings,
+                          project.settings.displayName || project.name,
+                        )
+                  }
                   keywords={[
                     project.name,
                     project.settings.displayName || "",
