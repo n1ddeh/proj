@@ -153,9 +153,28 @@ export default function Command() {
     return projects.filter((p) => matchesSearch(p, query));
   }, [projects, searchText]);
 
+  // Build a map of collection IDs to names for subtitle display
+  const collectionNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    getAllCollections()
+      .filter((c) => c.type === "manual")
+      .forEach((c) => map.set(c.id, c.name));
+    return map;
+  }, []);
+
+  const getCollectionNames = (project: ProjectWithSettings): string => {
+    if (!project.collections || project.collections.length === 0) return "";
+    return project.collections
+      .map((id) => collectionNameMap.get(id))
+      .filter(Boolean)
+      .join(", ");
+  };
+
   const groupedProjects = useMemo(() => {
     if (grouping === "flat") {
-      return [{ title: "All Projects", projects: filteredProjects }];
+      return [
+        { title: "All Projects", projects: filteredProjects, isAuto: true },
+      ];
     }
 
     if (grouping === "recency") {
@@ -167,8 +186,8 @@ export default function Command() {
       );
 
       return [
-        { title: "Recent", projects: recent },
-        { title: "Other", projects: rest },
+        { title: "Recent", projects: recent, isAuto: true },
+        { title: "Other", projects: rest, isAuto: true },
       ].filter((g) => g.projects.length > 0);
     }
 
@@ -176,7 +195,11 @@ export default function Command() {
     const collections = getAllCollections();
     const manualCollections = collections.filter((c) => c.type === "manual");
 
-    const groups: { title: string; projects: ProjectWithSettings[] }[] = [];
+    const groups: {
+      title: string;
+      projects: ProjectWithSettings[];
+      isAuto: boolean;
+    }[] = [];
     const assigned = new Set<string>();
 
     // Recent section (auto)
@@ -184,7 +207,7 @@ export default function Command() {
       isRecentProject(p.lastOpened),
     );
     if (recentProjects.length > 0) {
-      groups.push({ title: "Recent", projects: recentProjects });
+      groups.push({ title: "Recent", projects: recentProjects, isAuto: true });
       recentProjects.forEach((p) => assigned.add(p.path));
     }
 
@@ -197,6 +220,7 @@ export default function Command() {
         groups.push({
           title: collection.name,
           projects: collProjects,
+          isAuto: false,
         });
         collProjects.forEach((p) => assigned.add(p.path));
       }
@@ -205,7 +229,11 @@ export default function Command() {
     // Uncategorized
     const uncategorized = filteredProjects.filter((p) => !assigned.has(p.path));
     if (uncategorized.length > 0) {
-      groups.push({ title: "Uncategorized", projects: uncategorized });
+      groups.push({
+        title: "Uncategorized",
+        projects: uncategorized,
+        isAuto: true,
+      });
     }
 
     return groups;
@@ -246,16 +274,16 @@ export default function Command() {
             {group.projects.map((project) => {
               const indicator = getRecencyIndicator(project.lastOpened);
               const relativeTime = formatRelativeTime(project.lastOpened);
+              // Show collection names when in auto groups (Recent, Uncategorized, flat)
+              const subtitle = group.isAuto
+                ? getCollectionNames(project)
+                : undefined;
 
               return (
                 <List.Item
                   key={project.path}
                   title={project.settings.displayName || project.name}
-                  subtitle={
-                    project.relativePath !== project.name
-                      ? project.relativePath
-                      : undefined
-                  }
+                  subtitle={subtitle || undefined}
                   accessories={[
                     ...(indicator === "blue"
                       ? [{ icon: { source: Icon.Dot, tintColor: Color.Blue } }]
