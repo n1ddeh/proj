@@ -252,42 +252,71 @@ export default function Command() {
     return map;
   }, []);
 
-  const getCollectionAccessories = (
-    project: ProjectWithSettings,
-  ): {
+  type Accessory = {
     icon?: { source: Icon; tintColor?: string };
     text?: string;
     tooltip?: string;
-  }[] => {
+  };
+
+  const getCollectionAccessories = (project: ProjectWithSettings): Accessory[] => {
     if (!project.collections || project.collections.length === 0) return [];
-    const accessories: {
-      icon?: { source: Icon; tintColor?: string };
-      text?: string;
-      tooltip?: string;
-    }[] = [];
+    const accessories: Accessory[] = [];
 
     for (const id of project.collections) {
       const coll = collectionMap.get(id);
       if (!coll) continue;
-      // Add accessory with optional icon
       if (coll.icon) {
         const iconSource = Icon[coll.icon as keyof typeof Icon];
         accessories.push({
-          icon: {
-            source: iconSource,
-            tintColor: coll.color,
-          },
+          icon: { source: iconSource, tintColor: coll.color },
           text: coll.name,
           tooltip: coll.name,
         });
       } else {
-        // No icon - just show the name
-        accessories.push({
-          text: coll.name,
-          tooltip: coll.name,
-        });
+        accessories.push({ text: coll.name, tooltip: coll.name });
       }
     }
+    return accessories;
+  };
+
+  const getProjectAccessories = (
+    project: ProjectWithSettings,
+    isAutoGroup: boolean,
+  ): Accessory[] => {
+    const accessories: Accessory[] = [];
+
+    // Collection badges (only in auto groups)
+    if (isAutoGroup) {
+      accessories.push(...getCollectionAccessories(project));
+    }
+
+    // Divider between collections and time
+    const relativeTime = formatRelativeTime(project.lastOpened);
+    if (accessories.length > 0 && relativeTime) {
+      accessories.push({ text: "|" });
+    }
+
+    // Relative time (only for non-missing projects)
+    if (!project.missing && relativeTime) {
+      accessories.push({ text: relativeTime });
+    }
+
+    // Missing project warning
+    if (project.missing) {
+      accessories.push({
+        text: "Not found",
+        icon: { source: Icon.Warning, tintColor: Color.Red },
+      });
+    }
+
+    // Invalid IDE warning
+    if (!project.missing && project.hasInvalidIde) {
+      accessories.push({
+        icon: { source: Icon.ExclamationMark, tintColor: Color.Orange },
+        tooltip: `IDE not found: ${project.settings.ide?.name || "Unknown"}`,
+      });
+    }
+
     return accessories;
   };
 
@@ -723,50 +752,11 @@ export default function Command() {
             key={group.title}
             title={`${group.title} · ${group.projects.length}`}
           >
-            {group.projects.map((project) => {
-              const relativeTime = formatRelativeTime(project.lastOpened);
-              // Show collection icons + names when in auto groups (Recent, Uncategorized, flat)
-              const collectionAccessories = group.isAuto
-                ? getCollectionAccessories(project)
-                : [];
-
-              // Add divider between collections and time if both exist
-              const showDivider =
-                collectionAccessories.length > 0 && relativeTime;
-
-              return (
+            {group.projects.map((project) => (
                 <List.Item
                   key={project.path}
                   title={project.settings.displayName || project.name}
-                  accessories={[
-                    ...(project.missing
-                      ? [
-                          {
-                            text: "Not found",
-                            icon: {
-                              source: Icon.Warning,
-                              tintColor: Color.Red,
-                            },
-                          },
-                        ]
-                      : []),
-                    ...(!project.missing && project.hasInvalidIde
-                      ? [
-                          {
-                            icon: {
-                              source: Icon.ExclamationMark,
-                              tintColor: Color.Orange,
-                            },
-                            tooltip: `IDE not found: ${project.settings.ide?.name || "Unknown"}`,
-                          },
-                        ]
-                      : []),
-                    ...collectionAccessories,
-                    ...(showDivider ? [{ text: "|" }] : []),
-                    ...(!project.missing && relativeTime
-                      ? [{ text: relativeTime }]
-                      : []),
-                  ]}
+                  accessories={getProjectAccessories(project, group.isAuto)}
                   icon={
                     project.missing
                       ? { source: Icon.ExclamationMark, tintColor: Color.Red }
@@ -859,8 +849,7 @@ export default function Command() {
                     )
                   }
                 />
-              );
-            })}
+              ))}
           </List.Section>
         ))
       )}
