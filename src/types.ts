@@ -38,6 +38,7 @@ export interface EnhancedProject extends Project {
   sourceId?: string;
   detectedLang?: string;
   gitOrg?: string;
+  missing?: boolean;
 }
 
 export const AUTO_COLLECTIONS: Collection[] = [
