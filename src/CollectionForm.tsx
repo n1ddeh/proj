@@ -99,6 +99,8 @@ export default function CollectionForm({
         </ActionPanel>
       }
     >
+      <Form.Description text="Collections let you organize projects into groups. Assign projects to collections for quick filtering with #collection in search." />
+
       <Form.TextField
         id="name"
         title="Name"

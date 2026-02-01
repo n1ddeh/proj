@@ -6,6 +6,7 @@ import {
   showToast,
   Toast,
   popToRoot,
+  getPreferenceValues,
 } from "@raycast/api";
 import { useState, useMemo } from "react";
 import { basename } from "path";
@@ -14,6 +15,10 @@ import { addSource, loadSources } from "./sources";
 import { getAllCollections } from "./collections";
 import { findProjects, isProject, expandPath } from "./utils";
 import type { ProjectIDE } from "./settings";
+
+interface Preferences {
+  ide: { path: string; name: string };
+}
 
 const DEPTH_OPTIONS = [
   { title: "1 level", value: "1" },
@@ -28,11 +33,14 @@ function getAppName(appPath: string): string {
 }
 
 export default function AddProjectsCommand() {
+  const preferences = getPreferenceValues<Preferences>();
   const [directory, setDirectory] = useState<string[]>([]);
   const [isSource, setIsSource] = useState(false);
   const [depth, setDepth] = useState("2");
   const [collection, setCollection] = useState<string>("");
-  const [ideApp, setIdeApp] = useState<string[]>([]);
+  const [ideApp, setIdeApp] = useState<string[]>(
+    preferences.ide?.path ? [preferences.ide.path] : [],
+  );
 
   const [directoryError, setDirectoryError] = useState<string | undefined>();
 
@@ -203,7 +211,7 @@ export default function AddProjectsCommand() {
 
       <Form.Dropdown
         id="collection"
-        title="Default Collection"
+        title="Collection"
         info="Automatically assign projects to this collection"
         value={collection}
         onChange={setCollection}
@@ -221,7 +229,7 @@ export default function AddProjectsCommand() {
 
       <Form.FilePicker
         id="ide"
-        title="Default IDE"
+        title="IDE"
         info="Override the default IDE for projects from this source"
         allowMultipleSelection={false}
         canChooseDirectories={false}

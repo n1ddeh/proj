@@ -6,6 +6,7 @@ import {
   showToast,
   Toast,
   useNavigation,
+  getPreferenceValues,
 } from "@raycast/api";
 import { useState, useMemo } from "react";
 import {
@@ -76,6 +77,10 @@ function getAppName(appPath: string): string {
 
 type IconMode = "initials" | "raycast" | "custom";
 
+interface Preferences {
+  ide: { path: string; name: string };
+}
+
 function deriveIconMode(settings: {
   customIcon?: string;
   icon?: string;
@@ -92,6 +97,7 @@ export default function ProjectSettingsForm({
 }: ProjectSettingsFormProps) {
   const { pop } = useNavigation();
   const existingSettings = getProjectSettings(projectPath);
+  const preferences = getPreferenceValues<Preferences>();
 
   const [displayName, setDisplayName] = useState(
     existingSettings.displayName || "",
@@ -104,7 +110,11 @@ export default function ProjectSettingsForm({
     existingSettings.iconColor || ICON_COLORS[0].value,
   );
   const [ideApp, setIdeApp] = useState<string[]>(
-    existingSettings.ide?.path ? [existingSettings.ide.path] : [],
+    existingSettings.ide?.path
+      ? [existingSettings.ide.path]
+      : preferences.ide?.path
+        ? [preferences.ide.path]
+        : [],
   );
   const [collections, setCollections] = useState<string[]>(
     existingSettings.collections || [],
