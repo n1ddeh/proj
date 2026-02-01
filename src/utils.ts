@@ -1,6 +1,8 @@
 import { readdirSync, statSync, existsSync, readFileSync } from "fs";
 import { join, relative } from "path";
 import { homedir } from "os";
+import { Icon, Image } from "@raycast/api";
+import type { ProjectSettings } from "./settings";
 
 export interface Project {
   name: string;
@@ -241,4 +243,32 @@ export function extractGitOrg(dirPath: string): string | undefined {
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Resolves the icon to display for a project.
+ * Priority: customIcon > built-in icon > initials icon
+ */
+export function getProjectIcon(
+  settings: ProjectSettings,
+  projectName: string,
+): Image.Source {
+  // Custom icon takes priority
+  if (settings.customIcon && existsSync(settings.customIcon)) {
+    return settings.customIcon;
+  }
+
+  // Built-in Raycast icon
+  if (settings.icon) {
+    const builtinIcon = Icon[settings.icon as keyof typeof Icon];
+    if (builtinIcon) {
+      return builtinIcon;
+    }
+  }
+
+  // Fallback to initials icon
+  return generateInitialsIcon(
+    getProjectInitials(settings.displayName || projectName),
+    settings.iconColor || "#546E7A",
+  );
 }
