@@ -60,6 +60,8 @@ describe("types", () => {
   test("AUTO_COLLECTIONS contains default auto collections", () => {
     expect(AUTO_COLLECTIONS).toBeInstanceOf(Array);
     expect(AUTO_COLLECTIONS.length).toBeGreaterThan(0);
-    expect(AUTO_COLLECTIONS.find((c: Collection) => c.id === "_recent")).toBeDefined();
+    expect(
+      AUTO_COLLECTIONS.find((c: Collection) => c.id === "_recent"),
+    ).toBeDefined();
   });
 });

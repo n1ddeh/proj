@@ -33,8 +33,32 @@ export interface EnhancedProject extends Project {
 }
 
 export const AUTO_COLLECTIONS: Collection[] = [
-  { id: "_recent", name: "Recent", type: "auto", icon: "Clock", criteria: { kind: "recent", days: 7 } },
-  { id: "_month", name: "This Month", type: "auto", icon: "Calendar", criteria: { kind: "recent", days: 30 } },
-  { id: "_stale", name: "Stale", type: "auto", icon: "ExclamationMark", criteria: { kind: "stale", days: 90 } },
-  { id: "_uncategorized", name: "Uncategorized", type: "auto", icon: "QuestionMark", criteria: { kind: "uncategorized" } },
+  {
+    id: "_recent",
+    name: "Recent",
+    type: "auto",
+    icon: "Clock",
+    criteria: { kind: "recent", days: 7 },
+  },
+  {
+    id: "_month",
+    name: "This Month",
+    type: "auto",
+    icon: "Calendar",
+    criteria: { kind: "recent", days: 30 },
+  },
+  {
+    id: "_stale",
+    name: "Stale",
+    type: "auto",
+    icon: "ExclamationMark",
+    criteria: { kind: "stale", days: 90 },
+  },
+  {
+    id: "_uncategorized",
+    name: "Uncategorized",
+    type: "auto",
+    icon: "QuestionMark",
+    criteria: { kind: "uncategorized" },
+  },
 ];

@@ -1,4 +1,4 @@
-import { readdirSync, statSync, existsSync } from "fs";
+import { readdirSync, statSync, existsSync, readFileSync } from "fs";
 import { join, relative } from "path";
 import { homedir } from "os";
 
@@ -164,4 +164,49 @@ export function findProjects(rootDir: string, maxDepth: number): Project[] {
 
   scan(expandedRoot, 0);
   return projects.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function detectLanguage(dirPath: string): string | undefined {
+  // Order matters: more specific checks first
+  if (existsSync(join(dirPath, "Cargo.toml"))) return "rust";
+  if (existsSync(join(dirPath, "go.mod"))) return "go";
+  if (existsSync(join(dirPath, "pyproject.toml"))) return "python";
+  if (existsSync(join(dirPath, "pom.xml"))) return "java";
+  if (existsSync(join(dirPath, "build.gradle"))) return "kotlin";
+  if (existsSync(join(dirPath, "CMakeLists.txt"))) return "cpp";
+
+  // Check for TypeScript vs JavaScript
+  if (existsSync(join(dirPath, "package.json"))) {
+    if (existsSync(join(dirPath, "tsconfig.json"))) return "typescript";
+    return "javascript";
+  }
+
+  return undefined;
+}
+
+export function extractGitOrg(dirPath: string): string | undefined {
+  const gitConfigPath = join(dirPath, ".git", "config");
+  if (!existsSync(gitConfigPath)) return undefined;
+
+  try {
+    const config = readFileSync(gitConfigPath, "utf-8");
+
+    // Match remote origin URL
+    const urlMatch = config.match(/\[remote "origin"\][^[]*url\s*=\s*(.+)/);
+    if (!urlMatch) return undefined;
+
+    const url = urlMatch[1].trim();
+
+    // Handle SSH format: git@github.com:org/repo.git
+    const sshMatch = url.match(/git@[^:]+:([^/]+)\//);
+    if (sshMatch) return sshMatch[1];
+
+    // Handle HTTPS format: https://github.com/org/repo.git
+    const httpsMatch = url.match(/https?:\/\/[^/]+\/([^/]+)\//);
+    if (httpsMatch) return httpsMatch[1];
+
+    return undefined;
+  } catch {
+    return undefined;
+  }
 }

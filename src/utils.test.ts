@@ -6,6 +6,8 @@ import {
   expandPath,
   isProject,
   findProjects,
+  detectLanguage,
+  extractGitOrg,
   PROJECT_MARKERS,
   EXCLUDED_DIRS,
 } from "./utils";
@@ -147,5 +149,121 @@ describe("constants", () => {
     expect(EXCLUDED_DIRS.has("dist")).toBe(true);
     expect(EXCLUDED_DIRS.has("build")).toBe(true);
     expect(EXCLUDED_DIRS.has(".git")).toBe(true);
+  });
+});
+
+describe("detectLanguage", () => {
+  const testDir = join(tmpdir(), "project-opener-test-detectLang");
+
+  beforeAll(() => {
+    rmSync(testDir, { recursive: true, force: true });
+    mkdirSync(testDir, { recursive: true });
+  });
+
+  afterAll(() => {
+    rmSync(testDir, { recursive: true, force: true });
+  });
+
+  test("detects typescript from package.json", () => {
+    const projectDir = join(testDir, "ts-project");
+    mkdirSync(projectDir, { recursive: true });
+    writeFileSync(join(projectDir, "package.json"), "{}");
+    writeFileSync(join(projectDir, "tsconfig.json"), "{}");
+    expect(detectLanguage(projectDir)).toBe("typescript");
+  });
+
+  test("detects javascript from package.json only", () => {
+    const projectDir = join(testDir, "js-project");
+    mkdirSync(projectDir, { recursive: true });
+    writeFileSync(join(projectDir, "package.json"), "{}");
+    expect(detectLanguage(projectDir)).toBe("javascript");
+  });
+
+  test("detects rust from Cargo.toml", () => {
+    const projectDir = join(testDir, "rust-project");
+    mkdirSync(projectDir, { recursive: true });
+    writeFileSync(join(projectDir, "Cargo.toml"), "");
+    expect(detectLanguage(projectDir)).toBe("rust");
+  });
+
+  test("detects go from go.mod", () => {
+    const projectDir = join(testDir, "go-project");
+    mkdirSync(projectDir, { recursive: true });
+    writeFileSync(join(projectDir, "go.mod"), "");
+    expect(detectLanguage(projectDir)).toBe("go");
+  });
+
+  test("detects python from pyproject.toml", () => {
+    const projectDir = join(testDir, "py-project");
+    mkdirSync(projectDir, { recursive: true });
+    writeFileSync(join(projectDir, "pyproject.toml"), "");
+    expect(detectLanguage(projectDir)).toBe("python");
+  });
+
+  test("returns undefined for unknown project type", () => {
+    const projectDir = join(testDir, "unknown-project");
+    mkdirSync(projectDir, { recursive: true });
+    expect(detectLanguage(projectDir)).toBeUndefined();
+  });
+});
+
+describe("extractGitOrg", () => {
+  const testDir = join(tmpdir(), "project-opener-test-gitorg");
+
+  beforeAll(() => {
+    rmSync(testDir, { recursive: true, force: true });
+    mkdirSync(testDir, { recursive: true });
+  });
+
+  afterAll(() => {
+    rmSync(testDir, { recursive: true, force: true });
+  });
+
+  test("extracts org from github https URL", () => {
+    const projectDir = join(testDir, "github-https");
+    mkdirSync(join(projectDir, ".git"), { recursive: true });
+    writeFileSync(
+      join(projectDir, ".git", "config"),
+      `[remote "origin"]
+	url = https://github.com/acme-corp/my-project.git
+	fetch = +refs/heads/*:refs/remotes/origin/*`,
+    );
+    expect(extractGitOrg(projectDir)).toBe("acme-corp");
+  });
+
+  test("extracts org from github ssh URL", () => {
+    const projectDir = join(testDir, "github-ssh");
+    mkdirSync(join(projectDir, ".git"), { recursive: true });
+    writeFileSync(
+      join(projectDir, ".git", "config"),
+      `[remote "origin"]
+	url = git@github.com:my-org/repo.git
+	fetch = +refs/heads/*:refs/remotes/origin/*`,
+    );
+    expect(extractGitOrg(projectDir)).toBe("my-org");
+  });
+
+  test("extracts org from gitlab URL", () => {
+    const projectDir = join(testDir, "gitlab");
+    mkdirSync(join(projectDir, ".git"), { recursive: true });
+    writeFileSync(
+      join(projectDir, ".git", "config"),
+      `[remote "origin"]
+	url = https://gitlab.com/company/project.git`,
+    );
+    expect(extractGitOrg(projectDir)).toBe("company");
+  });
+
+  test("returns undefined for non-git directory", () => {
+    const projectDir = join(testDir, "no-git");
+    mkdirSync(projectDir, { recursive: true });
+    expect(extractGitOrg(projectDir)).toBeUndefined();
+  });
+
+  test("returns undefined for git dir without remote", () => {
+    const projectDir = join(testDir, "no-remote");
+    mkdirSync(join(projectDir, ".git"), { recursive: true });
+    writeFileSync(join(projectDir, ".git", "config"), "[core]\n\tbare = false");
+    expect(extractGitOrg(projectDir)).toBeUndefined();
   });
 });
