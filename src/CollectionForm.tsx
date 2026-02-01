@@ -17,8 +17,10 @@ interface CollectionFormProps {
   onSave: () => void;
 }
 
-function getAvailableIcons(): { value: string; title: string; icon: Icon }[] {
-  const icons: { value: string; title: string; icon: Icon }[] = [];
+function getAvailableIcons(): { value: string; title: string; icon?: Icon }[] {
+  const icons: { value: string; title: string; icon?: Icon }[] = [
+    { value: "", title: "None" },
+  ];
 
   for (const key of Object.keys(Icon)) {
     if (!isNaN(Number(key))) continue;
@@ -32,7 +34,9 @@ function getAvailableIcons(): { value: string; title: string; icon: Icon }[] {
     }
   }
 
-  return icons.sort((a, b) => a.title.localeCompare(b.title));
+  // Sort but keep "None" at the top
+  const [none, ...rest] = icons;
+  return [none, ...rest.slice().sort((a, b) => a.title.localeCompare(b.title))];
 }
 
 export default function CollectionForm({
@@ -43,7 +47,7 @@ export default function CollectionForm({
   const isEditing = !!collection;
 
   const [name, setName] = useState(collection?.name || "");
-  const [icon, setIcon] = useState(collection?.icon || "Folder");
+  const [icon, setIcon] = useState(collection?.icon || "");
   const [color, setColor] = useState(collection?.color || ICON_COLORS[0].value);
 
   const availableIcons = useMemo(() => getAvailableIcons(), []);
@@ -58,9 +62,9 @@ export default function CollectionForm({
     }
 
     if (isEditing && collection) {
-      updateCollection(collection.id, { name: name.trim(), icon, color });
+      updateCollection(collection.id, { name: name.trim(), icon: icon || undefined, color });
     } else {
-      createCollection({ name: name.trim(), type: "manual", icon, color });
+      createCollection({ name: name.trim(), type: "manual", icon: icon || undefined, color });
     }
 
     await showToast({

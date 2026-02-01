@@ -76,11 +76,14 @@ export default function ManageCollections() {
             <List.Item
               key={collection.id}
               title={collection.name}
-              icon={{
-                source:
-                  Icon[collection.icon as keyof typeof Icon] || Icon.Folder,
-                tintColor: collection.color || Color.PrimaryText,
-              }}
+              icon={
+                collection.icon
+                  ? {
+                      source: Icon[collection.icon as keyof typeof Icon] || Icon.Folder,
+                      tintColor: collection.color || Color.PrimaryText,
+                    }
+                  : undefined
+              }
               actions={
                 <ActionPanel>
                   <Action

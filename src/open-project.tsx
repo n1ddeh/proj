@@ -213,18 +213,24 @@ export default function Command() {
     for (const id of project.collections) {
       const coll = collectionMap.get(id);
       if (!coll) continue;
-      const iconSource = coll.icon
-        ? Icon[coll.icon as keyof typeof Icon]
-        : Icon.Tag;
-      // Add icon with name as a single accessory
-      accessories.push({
-        icon: {
-          source: iconSource,
-          tintColor: coll.color,
-        },
-        text: coll.name,
-        tooltip: coll.name,
-      });
+      // Add accessory with optional icon
+      if (coll.icon) {
+        const iconSource = Icon[coll.icon as keyof typeof Icon];
+        accessories.push({
+          icon: {
+            source: iconSource,
+            tintColor: coll.color,
+          },
+          text: coll.name,
+          tooltip: coll.name,
+        });
+      } else {
+        // No icon - just show the name
+        accessories.push({
+          text: coll.name,
+          tooltip: coll.name,
+        });
+      }
     }
     return accessories;
   };
@@ -271,7 +277,7 @@ export default function Command() {
             id: `suggestion-#${c.name}`,
             title: `#${c.name.toLowerCase().replace(/\s+/g, "-")}`,
             subtitle: c.name,
-            icon: c.icon ? (Icon[c.icon as keyof typeof Icon] as Icon) : Icon.Tag,
+            icon: c.icon ? (Icon[c.icon as keyof typeof Icon] as Icon) : Icon.Folder,
             filter: `${prefixWithSpace}#${c.name.toLowerCase().replace(/\s+/g, "-")}`,
           });
         }
@@ -357,6 +363,8 @@ export default function Command() {
       title: string;
       projects: ProjectWithSettings[];
       isAuto: boolean;
+      collectionIcon?: string;
+      collectionColor?: string;
     }[] = [];
     const assigned = new Set<string>();
 
@@ -379,6 +387,8 @@ export default function Command() {
           title: collection.name,
           projects: collProjects,
           isAuto: false,
+          collectionIcon: collection.icon,
+          collectionColor: collection.color,
         });
         collProjects.forEach((p) => assigned.add(p.path));
       }
