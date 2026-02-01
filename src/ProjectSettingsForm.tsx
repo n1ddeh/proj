@@ -74,6 +74,17 @@ function getAppName(appPath: string): string {
   return name.endsWith(".app") ? name.slice(0, -4) : name;
 }
 
+type IconMode = "initials" | "raycast" | "custom";
+
+function deriveIconMode(settings: {
+  customIcon?: string;
+  icon?: string;
+}): IconMode {
+  if (settings.customIcon) return "custom";
+  if (settings.icon) return "raycast";
+  return "initials";
+}
+
 export default function ProjectSettingsForm({
   projectPath,
   projectName,
@@ -84,6 +95,9 @@ export default function ProjectSettingsForm({
 
   const [displayName, setDisplayName] = useState(
     existingSettings.displayName || "",
+  );
+  const [iconMode, setIconMode] = useState<IconMode>(
+    deriveIconMode(existingSettings),
   );
   const [icon, setIcon] = useState(existingSettings.icon || "");
   const [iconColor, setIconColor] = useState(
@@ -116,41 +130,54 @@ export default function ProjectSettingsForm({
       };
     }
 
-    // Handle custom icon
-    let customIconPath: string | undefined = existingSettings.customIcon;
+    // Handle icon settings based on mode
+    let savedIcon: string | undefined;
+    let savedIconColor: string | undefined;
+    let customIconPath: string | undefined;
 
-    if (customIcon.length > 0 && customIcon[0]) {
-      const selectedFile = customIcon[0];
-      const ext = extname(selectedFile).slice(1).toLowerCase();
-
-      if (!SUPPORTED_IMAGE_TYPES.includes(ext)) {
-        await showToast({
-          style: Toast.Style.Failure,
-          title: "Invalid image format",
-          message: `Supported formats: ${SUPPORTED_IMAGE_TYPES.join(", ")}`,
-        });
-        return;
+    if (iconMode === "initials") {
+      savedIconColor = iconColor || undefined;
+      // Clean up custom icon if switching away from custom mode
+      if (existingSettings.customIcon) {
+        deleteCustomIcon(existingSettings.customIcon);
       }
+    } else if (iconMode === "raycast") {
+      savedIcon = icon || undefined;
+      // Clean up custom icon if switching away from custom mode
+      if (existingSettings.customIcon) {
+        deleteCustomIcon(existingSettings.customIcon);
+      }
+    } else if (iconMode === "custom") {
+      if (customIcon.length > 0 && customIcon[0]) {
+        const selectedFile = customIcon[0];
+        const ext = extname(selectedFile).slice(1).toLowerCase();
 
-      // Only copy if it's a new file (not already in our custom-icons dir)
-      if (selectedFile !== existingSettings.customIcon) {
-        // Delete old custom icon if exists
-        if (existingSettings.customIcon) {
-          deleteCustomIcon(existingSettings.customIcon);
+        if (!SUPPORTED_IMAGE_TYPES.includes(ext)) {
+          await showToast({
+            style: Toast.Style.Failure,
+            title: "Invalid image format",
+            message: `Supported formats: ${SUPPORTED_IMAGE_TYPES.join(", ")}`,
+          });
+          return;
         }
-        customIconPath = copyCustomIcon(projectPath, selectedFile);
+
+        // Only copy if it's a new file (not already in our custom-icons dir)
+        if (selectedFile !== existingSettings.customIcon) {
+          if (existingSettings.customIcon) {
+            deleteCustomIcon(existingSettings.customIcon);
+          }
+          customIconPath = copyCustomIcon(projectPath, selectedFile);
+        } else {
+          customIconPath = existingSettings.customIcon;
+        }
       }
-    } else if (existingSettings.customIcon) {
-      // Custom icon was cleared
-      deleteCustomIcon(existingSettings.customIcon);
-      customIconPath = undefined;
     }
 
     saveProjectSettings(projectPath, {
       displayName: displayName.trim() || undefined,
-      icon: icon || undefined,
+      icon: savedIcon,
       customIcon: customIconPath,
-      iconColor: iconColor || undefined,
+      iconColor: savedIconColor,
       ide,
       collections: collections.length > 0 ? collections : undefined,
       lastOpened: existingSettings.lastOpened,
@@ -182,45 +209,67 @@ export default function ProjectSettingsForm({
         value={displayName}
         onChange={setDisplayName}
       />
-      <Form.Dropdown id="icon" title="Icon" value={icon} onChange={setIcon}>
-        {availableIcons.map((item) => (
-          <Form.Dropdown.Item
-            key={item.value || "default"}
-            value={item.value}
-            title={item.title}
-            icon={item.icon}
-          />
-        ))}
-      </Form.Dropdown>
-      <Form.FilePicker
-        id="customIcon"
-        title="Custom Icon"
-        info="Upload a custom image (overrides icon selection above)"
-        allowMultipleSelection={false}
-        canChooseDirectories={false}
-        canChooseFiles={true}
-        value={customIcon}
-        onChange={setCustomIcon}
-      />
       <Form.Dropdown
-        id="iconColor"
-        title="Icon Color"
-        info="Background color for the initials icon (only applies when using default icon)"
-        value={iconColor}
-        onChange={setIconColor}
+        id="iconMode"
+        title="Icon Style"
+        value={iconMode}
+        onChange={(value) => setIconMode(value as IconMode)}
       >
-        {ICON_COLORS.map((color) => (
-          <Form.Dropdown.Item
-            key={color.value}
-            value={color.value}
-            title={color.name}
-            icon={generateInitialsIcon(
-              getProjectInitials(displayName || projectName),
-              color.value,
-            )}
-          />
-        ))}
+        <Form.Dropdown.Item
+          value="initials"
+          title="Initials"
+          icon={generateInitialsIcon(
+            getProjectInitials(displayName || projectName),
+            iconColor,
+          )}
+        />
+        <Form.Dropdown.Item value="raycast" title="Raycast Icon" icon={Icon.AppWindowGrid3x3} />
+        <Form.Dropdown.Item value="custom" title="Custom Image" icon={Icon.Image} />
       </Form.Dropdown>
+      {iconMode === "initials" && (
+        <Form.Dropdown
+          id="iconColor"
+          title="Color"
+          value={iconColor}
+          onChange={setIconColor}
+        >
+          {ICON_COLORS.map((color) => (
+            <Form.Dropdown.Item
+              key={color.value}
+              value={color.value}
+              title={color.name}
+              icon={generateInitialsIcon(
+                getProjectInitials(displayName || projectName),
+                color.value,
+              )}
+            />
+          ))}
+        </Form.Dropdown>
+      )}
+      {iconMode === "raycast" && (
+        <Form.Dropdown id="icon" title="Icon" value={icon} onChange={setIcon}>
+          {availableIcons.map((item) => (
+            <Form.Dropdown.Item
+              key={item.value || "default"}
+              value={item.value}
+              title={item.title}
+              icon={item.icon}
+            />
+          ))}
+        </Form.Dropdown>
+      )}
+      {iconMode === "custom" && (
+        <Form.FilePicker
+          id="customIcon"
+          title="Image"
+          info="PNG, JPG, SVG, or WebP"
+          allowMultipleSelection={false}
+          canChooseDirectories={false}
+          canChooseFiles={true}
+          value={customIcon}
+          onChange={setCustomIcon}
+        />
+      )}
       <Form.FilePicker
         id="ide"
         title="IDE Override"
