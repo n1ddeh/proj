@@ -3,7 +3,7 @@
   "title": "Project Opener",
   "description": "Quickly open projects from your projects directory in your preferred IDE",
   "icon": "icon.png",
-  "author": "markminkoff",
+  "author": "mark_minkoff",
   "license": "MIT",
   "commands": [
     {
