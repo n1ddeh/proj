@@ -22,7 +22,10 @@ interface ProjectIDE {
 interface ProjectSettings {
   displayName?: string;
   icon?: string;
+  iconColor?: string;
   ide?: ProjectIDE;
+  collections?: string[];
+  lastOpened?: number;
 }
 
 interface SettingsStore {
@@ -56,7 +59,15 @@ function saveProjectSettings(
   }
   const store = loadAllSettings();
 
-  if (!settings.displayName && !settings.icon && !settings.ide) {
+  const hasContent =
+    settings.displayName ||
+    settings.icon ||
+    settings.iconColor ||
+    settings.ide ||
+    (settings.collections && settings.collections.length > 0) ||
+    settings.lastOpened;
+
+  if (!hasContent) {
     delete store[projectPath];
   } else {
     store[projectPath] = settings;
@@ -188,6 +199,48 @@ describe("settings", () => {
     test("keeps project with only IDE override", () => {
       saveProjectSettings("/project", {
         ide: { path: "/Applications/Cursor.app", name: "Cursor" },
+      });
+
+      const saved = JSON.parse(readFileSync(TEST_SETTINGS_FILE, "utf-8"));
+      expect(saved["/project"]).toBeDefined();
+    });
+  });
+
+  describe("extended settings", () => {
+    test("saves and loads collections array", () => {
+      saveProjectSettings("/project", {
+        displayName: "Test",
+        collections: ["work", "frontend"],
+      });
+
+      const settings = getProjectSettings("/project");
+      expect(settings.collections).toEqual(["work", "frontend"]);
+    });
+
+    test("saves and loads lastOpened timestamp", () => {
+      const now = Date.now();
+      saveProjectSettings("/project", {
+        lastOpened: now,
+      });
+
+      const settings = getProjectSettings("/project");
+      expect(settings.lastOpened).toBe(now);
+    });
+
+    test("keeps project with only collections", () => {
+      saveProjectSettings("/project", {
+        collections: ["work"],
+      });
+
+      const saved = JSON.parse(readFileSync(TEST_SETTINGS_FILE, "utf-8"));
+      expect(saved["/project"]).toBeDefined();
+      expect(saved["/project"].collections).toEqual(["work"]);
+    });
+
+    test("keeps project with only lastOpened", () => {
+      const now = Date.now();
+      saveProjectSettings("/project", {
+        lastOpened: now,
       });
 
       const saved = JSON.parse(readFileSync(TEST_SETTINGS_FILE, "utf-8"));
