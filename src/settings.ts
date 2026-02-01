@@ -1,6 +1,7 @@
 import { environment } from "@raycast/api";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
-import { join, dirname } from "path";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync, unlinkSync } from "fs";
+import { join, dirname, extname } from "path";
+import { createHash } from "crypto";
 
 export interface ProjectIDE {
   path: string;
@@ -22,11 +23,38 @@ interface SettingsStore {
 }
 
 const SETTINGS_FILE = join(environment.supportPath, "project-settings.json");
+const CUSTOM_ICONS_DIR = join(environment.supportPath, "custom-icons");
 
 function ensureSettingsDir(): void {
   const dir = dirname(SETTINGS_FILE);
   if (!existsSync(dir)) {
     mkdirSync(dir, { recursive: true });
+  }
+}
+
+function ensureCustomIconsDir(): void {
+  if (!existsSync(CUSTOM_ICONS_DIR)) {
+    mkdirSync(CUSTOM_ICONS_DIR, { recursive: true });
+  }
+}
+
+export function copyCustomIcon(projectPath: string, sourceFilePath: string): string {
+  ensureCustomIconsDir();
+  const hash = createHash("md5").update(projectPath).digest("hex").slice(0, 12);
+  const ext = extname(sourceFilePath).toLowerCase();
+  const destFilename = `${hash}${ext}`;
+  const destPath = join(CUSTOM_ICONS_DIR, destFilename);
+  copyFileSync(sourceFilePath, destPath);
+  return destPath;
+}
+
+export function deleteCustomIcon(iconPath: string): void {
+  if (iconPath && existsSync(iconPath) && iconPath.startsWith(CUSTOM_ICONS_DIR)) {
+    try {
+      unlinkSync(iconPath);
+    } catch {
+      // Ignore deletion errors
+    }
   }
 }
 
