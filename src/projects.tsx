@@ -51,6 +51,7 @@ interface Preferences {
 
 interface ProjectWithSettings extends EnhancedProject {
   settings: ProjectSettings;
+  missing: boolean;
 }
 
 type GroupingMode = "collection" | "recency" | "flat";
@@ -126,6 +127,9 @@ export default function Command() {
         foundProjects.sort((a, b) => a.name.localeCompare(b.name));
       }
 
+      // Build set of discovered paths
+      const discoveredPaths = new Set(foundProjects.map((p) => p.path));
+
       const projectsWithSettings: ProjectWithSettings[] = foundProjects.map(
         (project) => {
           const existingSettings = allSettings[project.path] || {};
@@ -144,6 +148,7 @@ export default function Command() {
               lastOpened: existingSettings.lastOpened,
               detectedLang: detectLanguage(project.path),
               gitOrg: extractGitOrg(project.path),
+              missing: false,
               settings: updatedSettings,
             };
           }
@@ -154,10 +159,38 @@ export default function Command() {
             lastOpened: existingSettings.lastOpened,
             detectedLang: detectLanguage(project.path),
             gitOrg: extractGitOrg(project.path),
+            missing: false,
             settings: existingSettings,
           };
         },
       );
+
+      // Add missing projects from saved settings
+      for (const [savedPath, savedSettings] of Object.entries(allSettings)) {
+        if (!discoveredPaths.has(savedPath)) {
+          // Extract project name from path
+          const pathParts = savedPath.split("/");
+          const projectName = pathParts[pathParts.length - 1] || savedPath;
+
+          projectsWithSettings.push({
+            name: projectName,
+            path: savedPath,
+            relativePath: savedPath,
+            collections: savedSettings.collections || [],
+            lastOpened: savedSettings.lastOpened,
+            missing: true,
+            settings: savedSettings,
+          });
+        }
+      }
+
+      // Sort with missing projects at the end of each group
+      projectsWithSettings.sort((a, b) => {
+        if (a.missing !== b.missing) {
+          return a.missing ? 1 : -1;
+        }
+        return a.name.localeCompare(b.name);
+      });
 
       setProjects(projectsWithSettings);
     } catch (error) {
