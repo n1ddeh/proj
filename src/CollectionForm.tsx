@@ -62,9 +62,18 @@ export default function CollectionForm({
     }
 
     if (isEditing && collection) {
-      updateCollection(collection.id, { name: name.trim(), icon: icon || undefined, color });
+      updateCollection(collection.id, {
+        name: name.trim(),
+        icon: icon || undefined,
+        color,
+      });
     } else {
-      createCollection({ name: name.trim(), type: "manual", icon: icon || undefined, color });
+      createCollection({
+        name: name.trim(),
+        type: "manual",
+        icon: icon || undefined,
+        color,
+      });
     }
 
     await showToast({

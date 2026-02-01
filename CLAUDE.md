@@ -20,8 +20,8 @@ bun test          # Run tests
 
 **Raycast Commands:**
 
-- [src/open-project.tsx](src/open-project.tsx) - Main UI for browsing and opening projects
-- [src/manage-collections.tsx](src/manage-collections.tsx) - UI for managing collections
+- [src/projects.tsx](src/projects.tsx) - Main UI for browsing and opening projects
+- [src/project-collections.tsx](src/project-collections.tsx) - UI for managing collections
 
 **Core Logic:**
 

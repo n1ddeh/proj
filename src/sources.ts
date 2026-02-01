@@ -1,8 +1,9 @@
 import { environment } from "@raycast/api";
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
-import { join, dirname } from "path";
+import { join, dirname, basename } from "path";
 import type { SourceDirectory, EnhancedProject } from "./types";
 import { findProjects, expandPath } from "./utils";
+import { loadManualProjects } from "./manual-projects";
 
 const SOURCES_FILE = join(environment.supportPath, "sources.json");
 
@@ -67,9 +68,27 @@ export function getSourceById(id: string): SourceDirectory | undefined {
 
 export function findProjectsFromAllSources(): EnhancedProject[] {
   const sources = loadSources();
+  const manualProjects = loadManualProjects();
   const seenPaths = new Set<string>();
   const projects: EnhancedProject[] = [];
 
+  // Add manual projects first (they take priority)
+  for (const manual of manualProjects) {
+    const normalizedPath = expandPath(manual.path);
+    if (seenPaths.has(normalizedPath)) continue;
+    if (!existsSync(normalizedPath)) continue;
+
+    seenPaths.add(normalizedPath);
+    projects.push({
+      name: basename(normalizedPath),
+      path: normalizedPath,
+      relativePath: basename(normalizedPath),
+      collections: manual.defaultCollection ? [manual.defaultCollection] : [],
+      sourceId: manual.id,
+    });
+  }
+
+  // Add projects from source directories
   for (const source of sources) {
     const found = findProjects(source.path, source.depth);
 

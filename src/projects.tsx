@@ -17,8 +17,6 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   findProjects,
   Project,
-  getProjectInitials,
-  generateInitialsIcon,
   getRandomIconColor,
   detectLanguage,
   extractGitOrg,

@@ -22,16 +22,20 @@ type ExtensionPreferences = {
 declare type Preferences = ExtensionPreferences
 
 declare namespace Preferences {
-  /** Preferences accessible in the `open-project` command */
-  export type OpenProject = ExtensionPreferences & {}
-  /** Preferences accessible in the `manage-collections` command */
-  export type ManageCollections = ExtensionPreferences & {}
+  /** Preferences accessible in the `projects` command */
+  export type Projects = ExtensionPreferences & {}
+  /** Preferences accessible in the `project-collections` command */
+  export type ProjectCollections = ExtensionPreferences & {}
+  /** Preferences accessible in the `add-projects` command */
+  export type AddProjects = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
-  /** Arguments passed to the `open-project` command */
-  export type OpenProject = {}
-  /** Arguments passed to the `manage-collections` command */
-  export type ManageCollections = {}
+  /** Arguments passed to the `projects` command */
+  export type Projects = {}
+  /** Arguments passed to the `project-collections` command */
+  export type ProjectCollections = {}
+  /** Arguments passed to the `add-projects` command */
+  export type AddProjects = {}
 }
 

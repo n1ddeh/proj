@@ -1,5 +1,12 @@
 import { environment } from "@raycast/api";
-import { existsSync, readFileSync, writeFileSync, mkdirSync, copyFileSync, unlinkSync } from "fs";
+import {
+  existsSync,
+  readFileSync,
+  writeFileSync,
+  mkdirSync,
+  copyFileSync,
+  unlinkSync,
+} from "fs";
 import { join, dirname, extname } from "path";
 import { createHash } from "crypto";
 
@@ -38,7 +45,10 @@ function ensureCustomIconsDir(): void {
   }
 }
 
-export function copyCustomIcon(projectPath: string, sourceFilePath: string): string {
+export function copyCustomIcon(
+  projectPath: string,
+  sourceFilePath: string,
+): string {
   ensureCustomIconsDir();
   const hash = createHash("md5").update(projectPath).digest("hex").slice(0, 12);
   const ext = extname(sourceFilePath).toLowerCase();
@@ -49,7 +59,11 @@ export function copyCustomIcon(projectPath: string, sourceFilePath: string): str
 }
 
 export function deleteCustomIcon(iconPath: string): void {
-  if (iconPath && existsSync(iconPath) && iconPath.startsWith(CUSTOM_ICONS_DIR)) {
+  if (
+    iconPath &&
+    existsSync(iconPath) &&
+    iconPath.startsWith(CUSTOM_ICONS_DIR)
+  ) {
     try {
       unlinkSync(iconPath);
     } catch {

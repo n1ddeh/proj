@@ -1,6 +1,10 @@
 import type { EnhancedProject } from "./types";
 import { expandPath } from "./utils";
-import { getAllCollections, matchesAutoCollection, getCollectionById } from "./collections";
+import {
+  getAllCollections,
+  matchesAutoCollection,
+  getCollectionById,
+} from "./collections";
 
 export interface SearchFilters {
   collection?: string;

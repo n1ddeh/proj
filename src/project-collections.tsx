@@ -79,7 +79,9 @@ export default function ManageCollections() {
               icon={
                 collection.icon
                   ? {
-                      source: Icon[collection.icon as keyof typeof Icon] || Icon.Folder,
+                      source:
+                        Icon[collection.icon as keyof typeof Icon] ||
+                        Icon.Folder,
                       tintColor: collection.color || Color.PrimaryText,
                     }
                   : undefined

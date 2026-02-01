@@ -7,15 +7,21 @@
   "license": "MIT",
   "commands": [
     {
-      "name": "open-project",
-      "title": "Open Project",
+      "name": "projects",
+      "title": "Projects",
       "description": "Browse and open projects in your IDE",
       "mode": "view"
     },
     {
-      "name": "manage-collections",
-      "title": "Manage Collections",
+      "name": "project-collections",
+      "title": "Project Collections",
       "description": "Create, edit, and organize project collections",
+      "mode": "view"
+    },
+    {
+      "name": "add-projects",
+      "title": "Add Projects",
+      "description": "Add a single project or a source folder containing multiple projects",
       "mode": "view"
     }
   ],

@@ -24,6 +24,14 @@ export interface SourceDirectory {
   defaultIde?: ProjectIDE;
 }
 
+export interface ManualProject {
+  id: string;
+  path: string;
+  addedAt: number;
+  defaultIde?: ProjectIDE;
+  defaultCollection?: string;
+}
+
 export interface EnhancedProject extends Project {
   collections: string[];
   lastOpened?: number;
