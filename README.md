@@ -17,10 +17,12 @@
 ## Features
 
 - **Automatic Project Detection** - Scans directories and identifies projects by common markers like `.git`, `package.json`, `Cargo.toml`, and more
+- **Manual Project Addition** - Add individual projects without configuring source directories
 - **Collections** - Organize projects into custom collections with icons and colors
 - **Smart Search** - Filter by name, collection (`#work`), language (`lang:rust`), or git org (`org:anthropic`)
 - **Multiple Sources** - Scan multiple project directories with different depths
 - **Recency Tracking** - See when you last opened each project
+- **Missing Project Detection** - Automatically detects moved/deleted projects with options to relocate or remove
 - **Language Detection** - Automatically detects project language for filtering
 - **Per-Project Customization** - Set custom display names, icons, and IDE overrides
 
@@ -28,8 +30,9 @@
 
 | Command | Description |
 |---------|-------------|
-| **Open Project** | Browse and open projects in your IDE |
-| **Manage Collections** | Create, edit, and organize project collections |
+| **Projects** | Browse and open projects in your IDE |
+| **Project Collections** | Create, edit, and organize project collections |
+| **Add Projects** | Add a single project or a source folder containing multiple projects |
 
 ## Search Syntax
 
@@ -89,7 +92,8 @@ Configure in Raycast Preferences under Extensions > Proj:
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| **IDE Application** | The application used to open projects | *Required* |
+| **Default IDE** | The application used to open projects | *Required* |
+| **Show Stale Indicator** | Show red dot for projects not opened in 90+ days | Enabled |
 
 ### Per-Project Settings
 
@@ -108,10 +112,19 @@ Access via `Cmd + Shift + ,` when a project is selected:
 |--------|----------|-------------|
 | Open in IDE | `Enter` | Opens the project in your configured IDE |
 | Show in Finder | `Cmd + Enter` | Reveals the project folder in Finder |
-| Copy Path | `Cmd + Shift + C` | Copies the full project path to clipboard |
+| Copy Path | `Cmd + C` | Copies the full project path to clipboard |
 | Add to Collection | `Cmd + Shift + C` | Add project to a collection |
 | Project Settings | `Cmd + Shift + ,` | Opens per-project customization form |
 | Delete Project | `Ctrl + X` | Permanently delete the project folder |
+
+### Missing Project Actions
+
+When a project can no longer be found at its original path:
+
+| Action | Description |
+|--------|-------------|
+| Relocate Project | Select the new location to preserve settings |
+| Remove from Extension | Remove the project entry without deleting files |
 
 ## Development
 

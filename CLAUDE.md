@@ -22,6 +22,7 @@ bun test          # Run tests
 
 - [src/projects.tsx](src/projects.tsx) - Main UI for browsing and opening projects
 - [src/project-collections.tsx](src/project-collections.tsx) - UI for managing collections
+- [src/add-projects.tsx](src/add-projects.tsx) - Form for adding single projects or source folders
 
 **Core Logic:**
 
@@ -29,9 +30,17 @@ bun test          # Run tests
 - [src/settings.ts](src/settings.ts) - Per-project settings (display name, icon, IDE override)
 - [src/sources.ts](src/sources.ts) - Multiple source directory management
 - [src/collections.ts](src/collections.ts) - Manual and auto collection management
+- [src/manual-projects.ts](src/manual-projects.ts) - Manually added project management
 - [src/search.ts](src/search.ts) - Search query parsing (`#collection`, `lang:`, `org:`, `in:`)
 - [src/recency.ts](src/recency.ts) - Last-opened tracking and relative time formatting
 - [src/types.ts](src/types.ts) - Shared TypeScript types and auto-collection definitions
+
+**Projects Module (extracted components):**
+
+- [src/projects/](src/projects/) - Extracted components and hooks for the projects list
+- [src/projects/components/ProjectListItem.tsx](src/projects/components/ProjectListItem.tsx) - Individual project list item with actions
+- [src/projects/components/SearchSuggestionsList.tsx](src/projects/components/SearchSuggestionsList.tsx) - Search filter suggestions
+- [src/projects/hooks/useProjects.ts](src/projects/hooks/useProjects.ts) - Project loading and state management
 
 **Forms:**
 
@@ -47,9 +56,10 @@ bun test          # Run tests
 
 **Data Storage (in Raycast's support directory):**
 
-- `project-settings.json` - Per-project customization
+- `project-settings.json` - Per-project customization (includes lastOpened timestamps)
 - `sources.json` - Configured source directories
 - `collections.json` - User-created collections
+- `manual-projects.json` - Manually added projects (not from source scanning)
 
 ## Key Implementation Details
 
@@ -58,3 +68,5 @@ bun test          # Run tests
 - Auto-detects project language from marker files
 - Extracts git organization from `.git/config` remote URL
 - Auto collections: Recent (7 days), This Month (30 days), Stale (90+ days), Uncategorized
+- Missing project detection: projects that no longer exist at their path can be relocated or removed
+- Two ways to add projects: source folders (scan for multiple) or manual addition (single projects)
