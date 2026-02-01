@@ -273,11 +273,7 @@ export default function Command() {
       accessories.push(...getCollectionAccessories(project));
     }
 
-    // Divider between collections and time
     const relativeTime = formatRelativeTime(project.lastOpened);
-    if (accessories.length > 0 && relativeTime) {
-      accessories.push({ text: "|" });
-    }
 
     // Relative time (only for non-missing projects)
     if (!project.missing && relativeTime) {

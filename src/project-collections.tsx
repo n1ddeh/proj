@@ -56,23 +56,20 @@ export default function ManageCollections() {
   return (
     <List isLoading={isLoading} searchBarPlaceholder="Search collections...">
       <List.Section title="Manual Collections">
-        {manualCollections.length === 0 ? (
-          <List.Item
-            title="No collections yet"
-            subtitle="Create your first collection"
-            icon={Icon.Plus}
-            actions={
-              <ActionPanel>
-                <Action
-                  title="Create Collection"
-                  icon={Icon.Plus}
-                  onAction={() => push(<CollectionForm onSave={refresh} />)}
-                />
-              </ActionPanel>
-            }
-          />
-        ) : (
-          manualCollections.map((collection) => (
+        <List.Item
+          title="Create Collection"
+          icon={Icon.Plus}
+          actions={
+            <ActionPanel>
+              <Action
+                title="Create Collection"
+                icon={Icon.Plus}
+                onAction={() => push(<CollectionForm onSave={refresh} />)}
+              />
+            </ActionPanel>
+          }
+        />
+        {manualCollections.map((collection) => (
             <List.Item
               key={collection.id}
               title={collection.name}
@@ -115,8 +112,7 @@ export default function ManageCollections() {
                 </ActionPanel>
               }
             />
-          ))
-        )}
+          ))}
       </List.Section>
 
       <List.Section title="Auto Collections">
