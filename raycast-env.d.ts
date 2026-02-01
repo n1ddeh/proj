@@ -10,10 +10,6 @@
 type ExtensionPreferences = {
   /** Default IDE - Your default editor (VS Code, Cursor, JetBrains, etc). You can override this per-project later. */
   "ide"?: import("@raycast/api").Application,
-  /** Projects Directory (Legacy) - Used for migration only. Configure sources in the extension. */
-  "projectsDirectory": string,
-  /** Search Depth (Legacy) - Used for migration only. Configure per-source depth in the extension. */
-  "searchDepth": "1" | "2" | "3" | "4",
   /** Show Stale Indicator - Show red dot for projects not opened in 90+ days */
   "showStaleIndicator": boolean
 }

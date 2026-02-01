@@ -31,7 +31,6 @@ bun test          # Run tests
 - [src/collections.ts](src/collections.ts) - Manual and auto collection management
 - [src/search.ts](src/search.ts) - Search query parsing (`#collection`, `lang:`, `org:`, `in:`)
 - [src/recency.ts](src/recency.ts) - Last-opened tracking and relative time formatting
-- [src/migration.ts](src/migration.ts) - Legacy preference migration
 - [src/types.ts](src/types.ts) - Shared TypeScript types and auto-collection definitions
 
 **Forms:**
@@ -59,4 +58,3 @@ bun test          # Run tests
 - Auto-detects project language from marker files
 - Extracts git organization from `.git/config` remote URL
 - Auto collections: Recent (7 days), This Month (30 days), Stale (90+ days), Uncategorized
-- Legacy single-directory config auto-migrates to new sources system

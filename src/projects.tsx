@@ -42,15 +42,12 @@ import {
   updateLastOpened,
   isRecentProject,
 } from "./recency";
-import { runMigrationIfNeeded } from "./migration";
 import type { EnhancedProject } from "./types";
 import ProjectSettingsForm from "./ProjectSettingsForm";
 import AddToCollectionForm from "./AddToCollectionForm";
 
 interface Preferences {
   ide: { path: string; name: string };
-  projectsDirectory: string;
-  searchDepth: string;
   showStaleIndicator: boolean;
 }
 
@@ -107,39 +104,23 @@ export default function Command() {
       // Validate global IDE preference
       setIsGlobalIdeValid(isValidIde(preferences.ide.path));
 
-      // Run migration if needed
-      await runMigrationIfNeeded({
-        projectsDirectory: preferences.projectsDirectory,
-        searchDepth: preferences.searchDepth,
-      });
-
       const sources = loadSources();
       const allSettings = loadAllSettings();
 
-      // If no sources, fall back to legacy preferences
-      let foundProjects: Project[];
-      if (sources.length === 0) {
-        const searchDepth = parseInt(preferences.searchDepth || "2", 10);
-        foundProjects = findProjects(
-          preferences.projectsDirectory,
-          searchDepth,
-        );
-      } else {
-        // Scan all sources
-        const seenPaths = new Set<string>();
-        foundProjects = [];
+      // Scan all sources
+      const seenPaths = new Set<string>();
+      const foundProjects: Project[] = [];
 
-        for (const source of sources) {
-          const scanned = findProjects(source.path, source.depth);
-          for (const project of scanned) {
-            if (!seenPaths.has(project.path)) {
-              seenPaths.add(project.path);
-              foundProjects.push(project);
-            }
+      for (const source of sources) {
+        const scanned = findProjects(source.path, source.depth);
+        for (const project of scanned) {
+          if (!seenPaths.has(project.path)) {
+            seenPaths.add(project.path);
+            foundProjects.push(project);
           }
         }
-        foundProjects.sort((a, b) => a.name.localeCompare(b.name));
       }
+      foundProjects.sort((a, b) => a.name.localeCompare(b.name));
 
       // Build set of discovered paths
       const discoveredPaths = new Set(foundProjects.map((p) => p.path));
@@ -225,7 +206,7 @@ export default function Command() {
     } finally {
       setIsLoading(false);
     }
-  }, [preferences.projectsDirectory, preferences.searchDepth]);
+  }, [preferences.ide.path]);
 
   useEffect(() => {
     loadProjects();

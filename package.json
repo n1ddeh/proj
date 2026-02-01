@@ -34,28 +34,6 @@
       "required": true
     },
     {
-      "name": "projectsDirectory",
-      "title": "Projects Directory (Legacy)",
-      "description": "Used for migration only. Configure sources in the extension.",
-      "type": "directory",
-      "required": false,
-      "default": "~/Documents/projects"
-    },
-    {
-      "name": "searchDepth",
-      "title": "Search Depth (Legacy)",
-      "description": "Used for migration only. Configure per-source depth in the extension.",
-      "type": "dropdown",
-      "required": false,
-      "default": "2",
-      "data": [
-        { "title": "1 level", "value": "1" },
-        { "title": "2 levels", "value": "2" },
-        { "title": "3 levels", "value": "3" },
-        { "title": "4 levels", "value": "4" }
-      ]
-    },
-    {
       "name": "showStaleIndicator",
       "title": "Show Stale Indicator",
       "description": "Show red dot for projects not opened in 90+ days",
