@@ -153,21 +153,43 @@ export default function Command() {
     return projects.filter((p) => matchesSearch(p, query));
   }, [projects, searchText]);
 
-  // Build a map of collection IDs to names for subtitle display
-  const collectionNameMap = useMemo(() => {
-    const map = new Map<string, string>();
+  // Build a map of collection IDs to collection data for display
+  const collectionMap = useMemo(() => {
+    const map = new Map<
+      string,
+      { name: string; icon?: string; color?: string }
+    >();
     getAllCollections()
       .filter((c) => c.type === "manual")
-      .forEach((c) => map.set(c.id, c.name));
+      .forEach((c) =>
+        map.set(c.id, { name: c.name, icon: c.icon, color: c.color }),
+      );
     return map;
   }, []);
 
-  const getCollectionNames = (project: ProjectWithSettings): string => {
-    if (!project.collections || project.collections.length === 0) return "";
+  const getCollectionAccessories = (
+    project: ProjectWithSettings,
+  ): { icon: { source: Icon; tintColor?: string }; tooltip: string }[] => {
+    if (!project.collections || project.collections.length === 0) return [];
     return project.collections
-      .map((id) => collectionNameMap.get(id))
-      .filter(Boolean)
-      .join(", ");
+      .map((id) => {
+        const coll = collectionMap.get(id);
+        if (!coll) return null;
+        const iconSource = coll.icon
+          ? Icon[coll.icon as keyof typeof Icon]
+          : Icon.Tag;
+        return {
+          icon: {
+            source: iconSource,
+            tintColor: coll.color,
+          },
+          tooltip: coll.name,
+        };
+      })
+      .filter(Boolean) as {
+      icon: { source: Icon; tintColor?: string };
+      tooltip: string;
+    }[];
   };
 
   const groupedProjects = useMemo(() => {
@@ -274,17 +296,17 @@ export default function Command() {
             {group.projects.map((project) => {
               const indicator = getRecencyIndicator(project.lastOpened);
               const relativeTime = formatRelativeTime(project.lastOpened);
-              // Show collection names when in auto groups (Recent, Uncategorized, flat)
-              const subtitle = group.isAuto
-                ? getCollectionNames(project)
-                : undefined;
+              // Show collection icons when in auto groups (Recent, Uncategorized, flat)
+              const collectionAccessories = group.isAuto
+                ? getCollectionAccessories(project)
+                : [];
 
               return (
                 <List.Item
                   key={project.path}
                   title={project.settings.displayName || project.name}
-                  subtitle={subtitle || undefined}
                   accessories={[
+                    ...collectionAccessories,
                     ...(indicator === "blue"
                       ? [{ icon: { source: Icon.Dot, tintColor: Color.Blue } }]
                       : indicator === "red" && preferences.showStaleIndicator
