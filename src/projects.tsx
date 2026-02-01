@@ -26,6 +26,7 @@ import {
   loadAllSettings,
   saveProjectSettings,
   deleteProjectSettings,
+  deleteCustomIcon,
   ProjectSettings,
 } from "./settings";
 import { loadSources } from "./sources";
@@ -435,6 +436,9 @@ export default function Command() {
     if (confirmed) {
       try {
         rmSync(project.path, { recursive: true, force: true });
+        if (project.settings.customIcon) {
+          deleteCustomIcon(project.settings.customIcon);
+        }
         deleteProjectSettings(project.path);
         await showToast({
           style: Toast.Style.Success,
