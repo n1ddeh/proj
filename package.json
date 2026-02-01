@@ -1,7 +1,7 @@
 {
-  "name": "project-opener",
-  "title": "Project Opener",
-  "description": "Quickly open projects from your projects directory in your preferred IDE",
+  "name": "proj",
+  "title": "Proj",
+  "description": "Quickly open and organize your dev projects",
   "icon": "icon.png",
   "author": "mark_minkoff",
   "license": "MIT",
@@ -22,8 +22,8 @@
   "preferences": [
     {
       "name": "ide",
-      "title": "IDE Application",
-      "description": "The application to open projects with",
+      "title": "Default IDE",
+      "description": "Your default editor (VS Code, Cursor, JetBrains, etc). You can override this per-project later.",
       "type": "appPicker",
       "required": true
     },
