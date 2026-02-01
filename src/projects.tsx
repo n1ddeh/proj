@@ -647,7 +647,10 @@ export default function Command() {
                       ? [
                           {
                             text: "Not found",
-                            icon: { source: Icon.Warning, tintColor: Color.Red },
+                            icon: {
+                              source: Icon.Warning,
+                              tintColor: Color.Red,
+                            },
                           },
                         ]
                       : []),
