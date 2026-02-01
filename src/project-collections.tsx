@@ -70,49 +70,48 @@ export default function ManageCollections() {
           }
         />
         {manualCollections.map((collection) => (
-            <List.Item
-              key={collection.id}
-              title={collection.name}
-              icon={
-                collection.icon
-                  ? {
-                      source:
-                        Icon[collection.icon as keyof typeof Icon] ||
-                        Icon.Folder,
-                      tintColor: collection.color || Color.PrimaryText,
-                    }
-                  : undefined
-              }
-              actions={
-                <ActionPanel>
-                  <Action
-                    title="Edit Collection"
-                    icon={Icon.Pencil}
-                    onAction={() =>
-                      push(
-                        <CollectionForm
-                          collection={collection}
-                          onSave={refresh}
-                        />,
-                      )
-                    }
-                  />
-                  <Action
-                    title="Delete Collection"
-                    icon={Icon.Trash}
-                    style={Action.Style.Destructive}
-                    onAction={() => handleDelete(collection)}
-                  />
-                  <Action
-                    title="Create Collection"
-                    icon={Icon.Plus}
-                    shortcut={{ modifiers: ["cmd"], key: "n" }}
-                    onAction={() => push(<CollectionForm onSave={refresh} />)}
-                  />
-                </ActionPanel>
-              }
-            />
-          ))}
+          <List.Item
+            key={collection.id}
+            title={collection.name}
+            icon={
+              collection.icon
+                ? {
+                    source:
+                      Icon[collection.icon as keyof typeof Icon] || Icon.Folder,
+                    tintColor: collection.color || Color.PrimaryText,
+                  }
+                : undefined
+            }
+            actions={
+              <ActionPanel>
+                <Action
+                  title="Edit Collection"
+                  icon={Icon.Pencil}
+                  onAction={() =>
+                    push(
+                      <CollectionForm
+                        collection={collection}
+                        onSave={refresh}
+                      />,
+                    )
+                  }
+                />
+                <Action
+                  title="Delete Collection"
+                  icon={Icon.Trash}
+                  style={Action.Style.Destructive}
+                  onAction={() => handleDelete(collection)}
+                />
+                <Action
+                  title="Create Collection"
+                  icon={Icon.Plus}
+                  shortcut={{ modifiers: ["cmd"], key: "n" }}
+                  onAction={() => push(<CollectionForm onSave={refresh} />)}
+                />
+              </ActionPanel>
+            }
+          />
+        ))}
       </List.Section>
 
       <List.Section title="Auto Collections">

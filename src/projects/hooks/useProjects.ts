@@ -1,6 +1,15 @@
 // src/projects/hooks/useProjects.ts
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { showToast, Toast, getPreferenceValues, Icon } from "@raycast/api";
+import {
+  showToast,
+  Toast,
+  getPreferenceValues,
+  Icon,
+  confirmAlert,
+  Alert,
+  open,
+} from "@raycast/api";
+import { rmSync } from "fs";
 import {
   findProjects,
   Project,
@@ -8,11 +17,17 @@ import {
   detectLanguage,
   extractGitOrg,
 } from "../../utils";
-import { loadAllSettings, saveProjectSettings } from "../../settings";
+import {
+  loadAllSettings,
+  saveProjectSettings,
+  deleteProjectSettings,
+  deleteCustomIcon,
+  clearProjectIde,
+} from "../../settings";
 import { loadSources } from "../../sources";
 import { getAllCollections } from "../../collections";
 import { parseSearchQuery, matchesSearch } from "../../search";
-import { isRecentProject } from "../../recency";
+import { updateLastOpened, isRecentProject } from "../../recency";
 import { isValidIde, LANGUAGE_OPTIONS } from "../constants";
 import type {
   Preferences,
@@ -322,6 +337,125 @@ export function useProjects() {
     return groups;
   }, [filteredProjects, grouping]);
 
+  const handleOpen = useCallback(
+    async (project: ProjectWithSettings) => {
+      if (project.hasInvalidIde && project.settings.ide) {
+        const ideName = project.settings.ide.name;
+        const idePath = project.settings.ide.path;
+
+        if (!isGlobalIdeValid) {
+          await confirmAlert({
+            title: "IDE Not Found",
+            message: `"${ideName}" is no longer installed.\n\nPath: ${idePath}\n\nThe default IDE is also not available. Please configure a new IDE in project settings.`,
+            primaryAction: {
+              title: "Open Project Settings",
+            },
+          });
+          return { action: "openSettings" as const, project };
+        }
+
+        const useDefault = await confirmAlert({
+          title: "IDE Not Found",
+          message: `"${ideName}" is no longer installed.\n\nPath: ${idePath}`,
+          primaryAction: {
+            title: "Use Default IDE",
+          },
+          dismissAction: {
+            title: "Choose New IDE",
+          },
+        });
+
+        if (useDefault) {
+          clearProjectIde(project.path);
+          await updateLastOpened(project.path);
+          await open(project.path, preferences.ide.path);
+          loadProjects();
+          return { action: "opened" as const };
+        } else {
+          return { action: "openSettings" as const, project };
+        }
+      }
+
+      const idePath = project.settings.ide?.path || preferences.ide.path;
+      await updateLastOpened(project.path);
+      await open(project.path, idePath);
+      loadProjects();
+      return { action: "opened" as const };
+    },
+    [isGlobalIdeValid, preferences.ide.path, loadProjects],
+  );
+
+  const handleDelete = useCallback(
+    async (project: ProjectWithSettings) => {
+      const confirmed = await confirmAlert({
+        title: "Delete Project",
+        message: `Are you sure you want to permanently delete "${project.settings.displayName || project.name}"?\n\nThis will delete the entire folder:\n${project.path}\n\nThis action cannot be undone.`,
+        primaryAction: {
+          title: "Delete",
+          style: Alert.ActionStyle.Destructive,
+        },
+      });
+
+      if (confirmed) {
+        try {
+          rmSync(project.path, { recursive: true, force: true });
+          if (project.settings.customIcon) {
+            deleteCustomIcon(project.settings.customIcon);
+          }
+          deleteProjectSettings(project.path);
+          await showToast({
+            style: Toast.Style.Success,
+            title: "Project deleted",
+            message: project.settings.displayName || project.name,
+          });
+          loadProjects();
+        } catch (error) {
+          await showToast({
+            style: Toast.Style.Failure,
+            title: "Failed to delete project",
+            message: String(error),
+          });
+        }
+      }
+    },
+    [loadProjects],
+  );
+
+  const handleDeleteFromExtension = useCallback(
+    async (project: ProjectWithSettings) => {
+      const confirmed = await confirmAlert({
+        title: "Remove from Extension",
+        message: `Remove "${project.settings.displayName || project.name}" from the extension?\n\nThis only removes the saved settings. The project folder (if it exists elsewhere) will not be affected.`,
+        primaryAction: {
+          title: "Remove",
+          style: Alert.ActionStyle.Destructive,
+        },
+      });
+
+      if (confirmed) {
+        if (project.settings.customIcon) {
+          deleteCustomIcon(project.settings.customIcon);
+        }
+        deleteProjectSettings(project.path);
+        await showToast({
+          style: Toast.Style.Success,
+          title: "Removed from extension",
+          message: project.settings.displayName || project.name,
+        });
+        loadProjects();
+      }
+    },
+    [loadProjects],
+  );
+
+  const handleRelocateProject = useCallback((project: ProjectWithSettings) => {
+    return { action: "relocate" as const, project };
+  }, []);
+
+  const applySuggestion = useCallback((filter: string) => {
+    setSearchText(filter + " ");
+  }, []);
+
   return {
     projects,
     isLoading,
@@ -336,5 +470,10 @@ export function useProjects() {
     collectionMap,
     searchSuggestions,
     groupedProjects,
+    handleOpen,
+    handleDelete,
+    handleDeleteFromExtension,
+    handleRelocateProject,
+    applySuggestion,
   };
 }
