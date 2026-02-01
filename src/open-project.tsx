@@ -306,12 +306,17 @@ export default function Command() {
                 ? getCollectionAccessories(project)
                 : [];
 
+              // Add divider between collections and time if both exist
+              const showDivider =
+                collectionAccessories.length > 0 && relativeTime;
+
               return (
                 <List.Item
                   key={project.path}
                   title={project.settings.displayName || project.name}
                   accessories={[
                     ...collectionAccessories,
+                    ...(showDivider ? [{ text: "|" }] : []),
                     ...(relativeTime ? [{ text: relativeTime }] : []),
                   ]}
                   icon={
