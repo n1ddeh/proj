@@ -8,7 +8,10 @@ import {
   showToast,
   Toast,
   useNavigation,
+  confirmAlert,
+  Alert,
 } from "@raycast/api";
+import { rmSync } from "fs";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import {
   findProjects,
@@ -22,6 +25,7 @@ import {
 import {
   loadAllSettings,
   saveProjectSettings,
+  deleteProjectSettings,
   ProjectSettings,
 } from "./settings";
 import { loadSources } from "./sources";
@@ -274,10 +278,40 @@ export default function Command() {
     loadProjects(); // Refresh to update recency
   };
 
+  const handleDelete = async (project: ProjectWithSettings) => {
+    const confirmed = await confirmAlert({
+      title: "Delete Project",
+      message: `Are you sure you want to permanently delete "${project.settings.displayName || project.name}"?\n\nThis will delete the entire folder:\n${project.path}\n\nThis action cannot be undone.`,
+      primaryAction: {
+        title: "Delete",
+        style: Alert.ActionStyle.Destructive,
+      },
+    });
+
+    if (confirmed) {
+      try {
+        rmSync(project.path, { recursive: true, force: true });
+        deleteProjectSettings(project.path);
+        await showToast({
+          style: Toast.Style.Success,
+          title: "Project deleted",
+          message: project.settings.displayName || project.name,
+        });
+        loadProjects();
+      } catch (error) {
+        await showToast({
+          style: Toast.Style.Failure,
+          title: "Failed to delete project",
+          message: String(error),
+        });
+      }
+    }
+  };
+
   return (
     <List
       isLoading={isLoading}
-      searchBarPlaceholder="Search projects\u2026 (#collection, lang:, org:)"
+      searchBarPlaceholder="Search projects: (#collection, lang:, org:)"
       onSearchTextChange={setSearchText}
       searchBarAccessory={
         <List.Dropdown
@@ -374,6 +408,15 @@ export default function Command() {
                               />,
                             )
                           }
+                        />
+                      </ActionPanel.Section>
+                      <ActionPanel.Section>
+                        <Action
+                          title="Delete Project"
+                          icon={Icon.Trash}
+                          style={Action.Style.Destructive}
+                          shortcut={{ modifiers: ["ctrl"], key: "x" }}
+                          onAction={() => handleDelete(project)}
                         />
                       </ActionPanel.Section>
                     </ActionPanel>

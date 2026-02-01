@@ -70,3 +70,10 @@ export function saveProjectSettings(
 
   writeFileSync(SETTINGS_FILE, JSON.stringify(store, null, 2));
 }
+
+export function deleteProjectSettings(projectPath: string): void {
+  ensureSettingsDir();
+  const store = loadAllSettings();
+  delete store[projectPath];
+  writeFileSync(SETTINGS_FILE, JSON.stringify(store, null, 2));
+}
