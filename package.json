@@ -11,6 +11,12 @@
       "title": "Open Project",
       "description": "Browse and open projects in your IDE",
       "mode": "view"
+    },
+    {
+      "name": "manage-collections",
+      "title": "Manage Collections",
+      "description": "Create, edit, and organize project collections",
+      "mode": "view"
     }
   ],
   "preferences": [
@@ -23,37 +29,34 @@
     },
     {
       "name": "projectsDirectory",
-      "title": "Projects Directory",
-      "description": "The root directory containing your projects",
+      "title": "Projects Directory (Legacy)",
+      "description": "Used for migration only. Configure sources in the extension.",
       "type": "directory",
-      "required": true,
+      "required": false,
       "default": "~/Documents/projects"
     },
     {
       "name": "searchDepth",
-      "title": "Search Depth",
-      "description": "How many levels deep to search for projects",
+      "title": "Search Depth (Legacy)",
+      "description": "Used for migration only. Configure per-source depth in the extension.",
       "type": "dropdown",
       "required": false,
       "default": "2",
       "data": [
-        {
-          "title": "1 level",
-          "value": "1"
-        },
-        {
-          "title": "2 levels",
-          "value": "2"
-        },
-        {
-          "title": "3 levels",
-          "value": "3"
-        },
-        {
-          "title": "4 levels",
-          "value": "4"
-        }
+        { "title": "1 level", "value": "1" },
+        { "title": "2 levels", "value": "2" },
+        { "title": "3 levels", "value": "3" },
+        { "title": "4 levels", "value": "4" }
       ]
+    },
+    {
+      "name": "showStaleIndicator",
+      "title": "Show Stale Indicator",
+      "description": "Show red dot for projects not opened in 90+ days",
+      "type": "checkbox",
+      "required": false,
+      "default": true,
+      "label": "Enabled"
     }
   ],
   "dependencies": {
