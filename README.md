@@ -13,9 +13,7 @@
 </p>
 
 <p align="center">
-   <video width="600">
-    <source src="https://github.com/user-attachments/assets/4135751c-1163-41be-bc5d-227e46179f76" type="video/mp4">
-  </video>
+   https://github.com/user-attachments/assets/4135751c-1163-41be-bc5d-227e46179f76
 </p>
 
 ---
