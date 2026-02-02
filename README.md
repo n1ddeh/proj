@@ -12,9 +12,7 @@
   A Raycast extension that scans your project directories, organizes them into collections, and lets you instantly open any project in your favorite editor.
 </p>
 
-<p align="center">
-   https://github.com/user-attachments/assets/4135751c-1163-41be-bc5d-227e46179f76
-</p>
+https://github.com/user-attachments/assets/74638d21-2e71-457e-a38b-ce23e3beb283
 
 ---
 
